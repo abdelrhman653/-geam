@@ -54,7 +54,6 @@
             border-radius: 8px;
             font-weight: bold;
             font-size: 0.85rem;
-            box-shadow: 0 2px 6px rgba(0,180,216,0.3);
         }
 
         .screen {
@@ -82,8 +81,8 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
 
-        .btn-danger { background: var(--accent-red); box-shadow: 0 4px 10px rgba(230,57,70,0.3); }
-        .btn-green { background: var(--accent-green); box-shadow: 0 4px 10px rgba(42,157,143,0.3); }
+        .btn-danger { background: var(--accent-red); }
+        .btn-green { background: var(--accent-green); }
         .btn:active { transform: scale(0.97); }
 
         input {
@@ -120,7 +119,6 @@
             cursor: pointer;
             position: relative;
             overflow: hidden;
-            transition: 0.2s;
         }
 
         .card img {
@@ -178,6 +176,31 @@
             color: #34d399;
             border-color: #34d399;
         }
+
+        /* Modal / Pop-up Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
+            border: 1px solid var(--accent-blue);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .modal h3 { margin-bottom: 15px; font-size: 1.1rem; }
     </style>
 </head>
 <body>
@@ -205,6 +228,12 @@
         <button class="btn" onclick="selectCategory('food')">أكلات 🍔</button>
     </div>
 
+    <!-- شاشة اختيار الشخصية السرية -->
+    <div id="selectTargetScreen" class="screen">
+        <h3 style="margin-bottom: 10px; color: var(--accent-blue);">اضغط على كارت لتختاره كـ (شخصيتك السرية):</h3>
+        <div class="grid" id="selectionGrid"></div>
+    </div>
+
     <!-- شاشة اللعب -->
     <div id="gameScreen" class="screen">
         <div id="peerStatus" class="connection-status">⏳ في انتظار انضمام الخصم...</div>
@@ -215,80 +244,47 @@
         <button class="btn btn-danger" onclick="leaveGame()">خروج</button>
     </div>
 
+    <!-- نافذة الإجراءات عند الضغط على كارت -->
+    <div id="actionModal" class="modal-overlay">
+        <div class="modal">
+            <h3 id="modalTitle">ماذا تريد أن تفعل؟</h3>
+            <button class="btn btn-green" onclick="confirmAction('guess')">🎯 تخمين (هذا هو الاختيار الصح)</button>
+            <button class="btn" onclick="confirmAction('eliminate')">❌ استبعاد الكارت</button>
+            <button class="btn btn-danger" onclick="closeModal()">إلغاء</button>
+        </div>
+    </div>
+
     <script>
+        // تم تعديل المسارات لتعمل مع الملفات المرفوعة مباشرة بدون مجلد images
         const DATABASE = {
             players: [
-                { name: "محمد صلاح", img: "images/Salah.jpg" },
-                { name: "أبو تريكة", img: "images/Abu Trika.jpeg" },
-                { name: "ليونيل ميسي", img: "images/Messi.jpeg" },
-                { name: "كريستيانو رونالدو", img: "images/Ronaldo.webp" },
-                { name: "عمر مرموش", img: "images/Marmoush.webp" },
-                { name: "محمد الشناوي", img: "images/Shenawi.webp" },
-                { name: "كيليان إمبابي", img: "images/Mbappe.webp" },
-                { name: "إرلينج هالاند", img: "images/Haaland.webp" },
-                { name: "زين الدين زيدان", img: "images/Zidane.webp" },
-                { name: "لوكا مودريتش", img: "images/Modric.webp" },
-                { name: "كريم بنزيما", img: "images/Benzema.webp" },
-                { name: "نيمار داسيلفا", img: "images/Neymar.webp" },
-                { name: "مصطفى محمد", img: "images/Mustafa.webp" },
-                { name: "رونالدينيو", img: "images/Ronaldinho.webp" },
-                { name: "شيكابالا", img: "images/Chica.webp" }
+                { name: "محمد صلاح", img: "Salah.jpg" },
+                { name: "أبو تريكة", img: "Abu Trika.jpeg" },
+                { name: "ليونيل ميسي", img: "Messi.jpeg" },
+                { name: "كريستيانو رونالدو", img: "Ronaldo.webp" },
+                { name: "عمر مرموش", img: "Marmoush.webp" },
+                { name: "محمد الشناوي", img: "Shenawi.webp" },
+                { name: "كيليان إمبابي", img: "Mbappe.webp" },
+                { name: "إرلينج هالاند", img: "Haaland.webp" },
+                { name: "زين الدين زيدان", img: "Zidane.webp" },
+                { name: "لوكا مودريتش", img: "Modric.webp" },
+                { name: "كريم بنزيما", img: "Benzema.webp" },
+                { name: "نيمار داسيلفا", img: "Neymar.webp" },
+                { name: "مصطفى محمد", img: "Mustafa.webp" },
+                { name: "رونالدينيو", img: "Ronaldinho.webp" },
+                { name: "شيكابالا", img: "Chica.webp" }
             ],
-            actors: [
-                { name: "عادل إمام", img: "images/Adel.jpg" },
-                { name: "أحمد حلمي", img: "images/Helmy.jpg" },
-                { name: "كريم عبد العزيز", img: "images/Karim.jpg" },
-                { name: "أحمد السقا", img: "images/Sakka.jpg" },
-                { name: "محمد هنيدي", img: "images/Henedy.jpg" },
-                { name: "توم كروز", img: "images/Tom.jpg" },
-                { name: "ويل سميث", img: "images/Will.jpg" },
-                { name: "ليوناردو دي كابريو", img: "images/Leo.jpg" },
-                { name: "أمير كرارة", img: "images/Karara.jpg" },
-                { name: "ماجد الكدواني", img: "images/Maged.jpg" },
-                { name: "آسر ياسين", img: "images/Asser.jpg" },
-                { name: "منى زكي", img: "images/Mona.jpg" },
-                { name: "ياسمين عبد العزيز", img: "images/Yasmin.jpg" },
-                { name: "جاكي شان", img: "images/Jackie.jpg" },
-                { name: "ذا روك", img: "images/Rock.jpg" }
-            ],
-            movies: [
-                { name: "الجزيرة", img: "images/Gezira.jpg" },
-                { name: "الفيل الأزرق", img: "images/Elephant.jpg" },
-                { name: "ولاد رزق", img: "images/Rizk.jpg" },
-                { name: "Avatar", img: "images/Avatar.jpg" },
-                { name: "Titanic", img: "images/Titanic.jpg" },
-                { name: "كازابلانكا", img: "images/Casablanca.jpg" },
-                { name: "كيرة والجن", img: "images/Kira.jpg" },
-                { name: "Inception", img: "images/Inception.jpg" },
-                { name: "Interstellar", img: "images/Interstellar.jpg" },
-                { name: "Joker", img: "images/Joker.jpg" },
-                { name: "The Dark Knight", img: "images/Batman.jpg" },
-                { name: "Avengers", img: "images/Avengers.jpg" },
-                { name: "إبراهيم الأبيض", img: "images/Ibrahim.jpg" },
-                { name: "صعيدي في الجامعة", img: "images/Saedi.jpg" },
-                { name: "عسل أسود", img: "images/Assal.jpg" }
-            ],
-            food: [
-                { name: "كشري", img: "images/Koshary.jpg" },
-                { name: "بيتزا", img: "images/Pizza.jpg" },
-                { name: "برجر", img: "images/Burger.jpg" },
-                { name: "ملوخية", img: "images/Molokhia.jpg" },
-                { name: "شاورما", img: "images/Shawarma.jpg" },
-                { name: "طعمة / فلافل", img: "images/Falafel.jpg" },
-                { name: "فول مدمس", img: "images/Ful.jpg" },
-                { name: "فتة مصرية", img: "images/Fatteh.jpg" },
-                { name: "حواوشي", img: "images/Hawawshi.jpg" },
-                { name: "سوشي", img: "images/Sushi.jpg" },
-                { name: "كبسة", img: "images/Kabsa.jpg" },
-                { name: "أم علي", img: "images/OmAli.jpg" },
-                { name: "بشاميل", img: "images/Bechamel.jpg" },
-                { name: "كباب وكفتة", img: "images/Kebab.jpg" },
-                { name: "وافل", img: "images/Waffle.jpg" }
-            ]
+            actors: [],
+            movies: [],
+            food: []
         };
 
         let peer = null;
         let conn = null;
+        let selectedCategory = 'players';
+        let myTarget = null;
+        let activeCardElement = null;
+        let activeCardData = null;
 
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -326,7 +322,33 @@
         }
 
         function selectCategory(cat) {
-            startGame(cat);
+            selectedCategory = cat;
+            const list = DATABASE[cat];
+            
+            if (!list || list.length === 0) {
+                alert("هذه الفئة غير متوفرة حالياً، اختر فئة اللاعبين!");
+                return;
+            }
+
+            // فتح شاشة اختار شخصيتك السرية بنفسك
+            const selGrid = document.getElementById('selectionGrid');
+            selGrid.innerHTML = '';
+
+            list.forEach((item) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `<img src="${item.img}" alt="${item.name}"><span>${item.name}</span>`;
+                card.onclick = () => chooseMyTarget(item);
+                selGrid.appendChild(card);
+            });
+
+            showScreen('selectTargetScreen');
+        }
+
+        function chooseMyTarget(item) {
+            myTarget = item;
+            document.getElementById('myTargetName').innerText = myTarget.name;
+            startGame();
         }
 
         function updateConnectionStatus(isConnected) {
@@ -340,11 +362,8 @@
             }
         }
 
-        function startGame(cat) {
-            const list = DATABASE[cat];
-            const myTarget = list[Math.floor(Math.random() * list.length)];
-            document.getElementById('myTargetName').innerText = myTarget.name;
-
+        function startGame() {
+            const list = DATABASE[selectedCategory];
             const grid = document.getElementById('grid');
             grid.innerHTML = '';
 
@@ -352,11 +371,31 @@
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.innerHTML = `<img src="${item.img}" alt="${item.name}"><span>${item.name}</span>`;
-                card.onclick = () => card.classList.toggle('eliminated');
+                card.onclick = () => openCardActions(card, item);
                 grid.appendChild(card);
             });
 
             showScreen('gameScreen');
+        }
+
+        function openCardActions(cardEl, cardData) {
+            activeCardElement = cardEl;
+            activeCardData = cardData;
+            document.getElementById('modalTitle').innerText = `اختيار: ${cardData.name}`;
+            document.getElementById('actionModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('actionModal').style.display = 'none';
+        }
+
+        function confirmAction(type) {
+            closeModal();
+            if (type === 'eliminate') {
+                activeCardElement.classList.toggle('eliminated');
+            } else if (type === 'guess') {
+                alert(`🎯 قمت بتخمين: ${activeCardData.name}!`);
+            }
         }
 
         function leaveGame() {
