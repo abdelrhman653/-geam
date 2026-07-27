@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>اقف في صفي - أونلاين سريع</title>
-    <!-- مكتبة MQTT للأونلاين -->
+    <title>اقف في صفي - أونلاين</title>
+    <!-- مكتبة الربط الأونلاين -->
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
@@ -12,6 +12,13 @@
         
         h1 { color: #38bdf8; font-size: 22px; margin-bottom: 5px; text-align: center; }
         .subtitle { color: #94a3b8; font-size: 13px; margin-bottom: 10px; text-align: center; }
+
+        /* شريط كود الغرفة الثابت */
+        .room-bar {
+            background: #0284c7; color: #fff; padding: 8px 15px; border-radius: 20px;
+            font-weight: bold; font-size: 14px; margin-bottom: 10px; text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); width: 100%; max-width: 500px;
+        }
 
         .online-box {
             background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 12px;
@@ -45,12 +52,14 @@
 <body>
 
     <h1>🎮 اقف في صفي (أونلاين)</h1>
-    <div class="subtitle" id="status">أنشئ غرفة أو أدخل كود صاحبك فوراً!</div>
+    <div class="subtitle" id="status">أنشئ غرفة أو أدخل كود صاحبك!</div>
+
+    <!-- شريط الكود الثابت بعد الدخول -->
+    <div id="roomBar" class="room-bar hidden">🔑 كود الغرفة: <span id="activeRoomCode">---</span></div>
 
     <div id="setup-box" class="online-box">
-        <input type="text" id="myCodeDisplay" readonly placeholder="كود الغرفة الخاص بك..." style="color:#38bdf8; font-weight:bold;">
-        <button onclick="createRoom()" class="green">🌐 إنشاء كود غرفة أونلاين</button>
-        <hr style="border-color:#334155; margin:10px 0;">
+        <button onclick="createRoom()" class="green">🌐 إنشاء كود غرفة جديد</button>
+        <hr style="border-color:#334155; margin:15px 0;">
         <input type="text" id="joinCodeInput" placeholder="أدخل كود غرفة صاحبك هنا...">
         <button onclick="joinRoom()">انضمام لغرفة صاحبك 🚀</button>
     </div>
@@ -120,9 +129,12 @@
                 currentRoom = "abdo_game_room_" + roomCode;
                 client.subscribe(currentRoom);
 
+                // إظهار الكود فوق والشاشة الرئسية للعبة
+                document.getElementById('activeRoomCode').innerText = roomCode;
+                document.getElementById('roomBar').classList.remove('hidden');
                 document.getElementById('setup-box').classList.add('hidden');
                 document.getElementById('game-ui').classList.remove('hidden');
-                document.getElementById('status').innerText = "تم الاتصال بنجاح! اختر الشخصية السرية الخاصة بك.";
+                document.getElementById('status').innerText = "تم الاتصال! اختر شخصيتك السرية بالضغط عليها.";
                 
                 renderBoard();
 
@@ -150,7 +162,6 @@
 
         function createRoom() {
             const code = "ABDO-" + Math.floor(1000 + Math.random() * 9000);
-            document.getElementById('myCodeDisplay').value = code;
             connectMQTT(code);
         }
 
@@ -187,7 +198,7 @@
             if (!mySecretPlayer) {
                 mySecretPlayer = name;
                 card.classList.add('my-choice');
-                document.getElementById('status').innerText = `اختيارك السرّي: (${name}). اسأل صاحبك أو شطب كروت بالضغط عليها!`;
+                document.getElementById('status').innerText = `اختيارك السرّي: (${name}). اسأل صاحبك أو شطب كروت!`;
             } else {
                 if (confirm(`هل تريد شطب (${name}) من شبكتك؟`)) {
                     card.classList.add('eliminated');
