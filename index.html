@@ -4,408 +4,358 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>اقف في صفي - أونلاين</title>
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        body { background: #0f172a; color: #fff; display: flex; flex-direction: column; align-items: center; padding: 10px; min-height: 100vh; }
-        
-        h1 { color: #38bdf8; font-size: 24px; margin-bottom: 4px; text-align: center; }
-        .subtitle { color: #94a3b8; font-size: 13px; margin-bottom: 12px; text-align: center; }
-
-        .room-bar {
-            background: #0284c7; color: #fff; padding: 10px 15px; border-radius: 20px;
-            font-weight: bold; font-size: 14px; margin-bottom: 12px;
-            display: flex; justify-content: space-between; align-items: center;
-            width: 100%; max-width: 500px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-        }
-        .leave-btn {
-            background: #ef4444; color: white; border: none; padding: 6px 14px;
-            border-radius: 12px; font-size: 12px; font-weight: bold; cursor: pointer;
+        :root {
+            --bg-color: #0d1b2a;
+            --card-bg: #1b263b;
+            --accent-blue: #00b4d8;
+            --accent-red: #e63946;
+            --accent-green: #2a9d8f;
+            --text-color: #ffffff;
         }
 
-        .box {
-            background: #1e293b; border: 1px solid #334155; padding: 18px; border-radius: 14px;
-            width: 100%; max-width: 500px; text-align: center; margin-bottom: 12px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-        }
-        
-        input { width: 100%; padding: 12px; margin: 8px 0; background: #0f172a; border: 1px solid #475569; color: #fff; border-radius: 8px; text-align: center; font-size: 15px; }
-        
-        button { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; }
-        button.green { background: #10b981; }
-        button.purple { background: #8b5cf6; }
-        button.gray { background: #475569; }
-
-        .cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
-        .cat-card { background: #0f172a; border: 2px solid #38bdf8; border-radius: 10px; padding: 15px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .cat-card:active { transform: scale(0.97); }
-
-        /* شبكة الكروت */
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; max-width: 500px; }
-        .card { 
-            background: #1e293b; border: 2px solid #334155; border-radius: 10px; padding: 6px; 
-            text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; 
-            overflow: hidden; transition: transform 0.1s;
-        }
-        .card:active { transform: scale(0.95); }
-        .card-img-container {
-            width: 100%; height: 95px; border-radius: 6px; margin-bottom: 6px;
-            background: #0f172a; overflow: hidden;
-        }
-        .card img { width: 100%; height: 100%; object-fit: cover; }
-        .card span { font-size: 12px; font-weight: bold; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
-        
-        .card.my-choice { border-color: #f59e0b; background: #451a03; box-shadow: 0 0 10px #f59e0b; }
-        .card.eliminated { opacity: 0.2; filter: grayscale(100%); background: #450a0a; border-color: #ef4444; }
-
-        /* المحادثة */
-        .chat-box { background: #1e293b; width: 100%; max-width: 500px; border-radius: 12px; padding: 12px; margin-top: 12px; border: 1px solid #334155; }
-        .messages { max-height: 130px; overflow-y: auto; font-size: 13px; margin-bottom: 8px; text-align: right; background: #0f172a; padding: 10px; border-radius: 8px; }
-        .msg { padding: 4px 0; border-bottom: 1px solid #1e293b; }
-        .chat-input { display: flex; gap: 6px; }
-        .chat-input input { margin: 0; }
-        .chat-input button { width: auto; padding: 0 18px; }
-
-        /* النوافذ المنبثقة (Modals) */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(6px);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background: #1e293b; border: 2px solid #38bdf8; border-radius: 16px;
-            padding: 22px; width: 85%; max-width: 340px; text-align: center;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.6);
-        }
-        .modal-title { font-size: 18px; font-weight: bold; color: #38bdf8; margin-bottom: 15px; }
-        .modal-actions { display: flex; flex-direction: column; gap: 10px; }
-        .btn-guess { background: #10b981; }
-        .btn-eliminate { background: #ef4444; }
-        .btn-cancel { background: #475569; }
-
-        /* شاشة الفوز / الخسارة */
-        .win-card {
-            border-color: #10b981;
-            background: linear-gradient(145deg, #064e3b, #1e293b);
-            animation: popIn 0.3s ease-out;
-        }
-        .win-icon { font-size: 50px; margin-bottom: 10px; }
-        .win-text { font-size: 15px; color: #cbd5e1; margin-bottom: 20px; line-height: 1.5; }
-
-        @keyframes popIn {
-            0% { transform: scale(0.7); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
         }
 
-        .hidden { display: none !important; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        header {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #14213d;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        h1 { font-size: 1.2rem; color: #fff; }
+
+        .room-code {
+            background: var(--accent-blue);
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            max-width: 500px;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .active { display: flex; }
+
+        .btn {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin: 8px 0;
+            transition: 0.2s;
+        }
+
+        .btn-danger { background: var(--accent-red); }
+        .btn-green { background: var(--accent-green); }
+        .btn:active { transform: scale(0.98); }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 10px;
+            border: 2px solid #334155;
+            background: #1e293b;
+            color: white;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            aspect-ratio: 3/4;
+            border: 2px solid #334155;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card img {
+            width: 100%;
+            height: 75%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .card span {
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 4px;
+        }
+
+        .card.eliminated {
+            filter: grayscale(100%);
+            opacity: 0.3;
+        }
+
+        .card.eliminated::after {
+            content: "✕";
+            position: absolute;
+            color: var(--accent-red);
+            font-size: 3rem;
+            font-weight: bold;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .my-choice {
+            background: #1e293b;
+            padding: 10px;
+            border-radius: 10px;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 10px;
+            border: 1px solid var(--accent-blue);
+        }
+
+        .status-msg {
+            margin: 10px 0;
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
     </style>
 </head>
 <body>
 
-    <h1>🎮 اقف في صفي</h1>
-    <div class="subtitle" id="status">أنشئ غرفة أونلاين أو انضم لصاحبك!</div>
+    <header>
+        <h1>اقف في صفي - أونلاين</h1>
+        <div id="roomDisplay" class="room-code" style="display:none;">كود الغرفة: <span id="codeText"></span></div>
+    </header>
 
-    <div id="roomBar" class="room-bar hidden">
-        <span>🔑 كود الغرفة: <b id="activeRoomCode">---</b></span>
-        <button class="leave-btn" onclick="leaveRoom()">🚪 خروج</button>
+    <!-- شاشة البداية -->
+    <div id="startScreen" class="screen active">
+        <input type="text" id="username" placeholder="اكتب اسمك هنا">
+        <button class="btn btn-green" onclick="createRoom()">إنشاء غرفة جديدة</button>
+        <hr style="width:100%; border:1px solid #334155; margin:15px 0;">
+        <input type="text" id="joinCode" placeholder="أدخل كود الغرفة للإنضمام">
+        <button class="btn" onclick="joinRoom()">دخول الغرفة</button>
     </div>
 
-    <!-- 1. الشاشة الرئيسية -->
-    <div id="mode-box" class="box">
-        <button onclick="startCreateRoom()" class="green">➕ إنشاء غرفة جديدة</button>
-        <hr style="border-color:#334155; margin:15px 0;">
-        <input type="text" id="joinCodeInput" placeholder="أدخل كود الغرفة للإنضمام...">
-        <button onclick="joinRoom()">🚀 انضمام للغرفة</button>
+    <!-- شاشة اختيار القسم -->
+    <div id="categoryScreen" class="screen">
+        <h3>اختر القسم للعب:</h3>
+        <button class="btn" onclick="selectCategory('players')">لاعبين كرة قدم ⚽</button>
+        <button class="btn" onclick="selectCategory('actors')">ممثلين 🎬</button>
+        <button class="btn" onclick="selectCategory('movies')">أفلام 🎥</button>
+        <button class="btn" onclick="selectCategory('food')">أكلات 🍔</button>
     </div>
 
-    <!-- 2. شاشة اختيار الفئة عند الإنشاء -->
-    <div id="category-box" class="box hidden">
-        <h3 style="color:#38bdf8; margin-bottom: 10px;">اختر فئة الكروت للعبة:</h3>
-        <div class="cat-grid">
-            <div class="cat-card" onclick="confirmCategory('players')">⚽ نجوم الكرة</div>
-            <div class="cat-card" onclick="confirmCategory('actors')">🎬 نجوم الفن</div>
-            <div class="cat-card" onclick="confirmCategory('movies')">🍿 أفلام سينما</div>
-            <div class="cat-card" onclick="confirmCategory('food')">🍔 أكلات مشهورة</div>
+    <!-- شاشة الانتظار -->
+    <div id="waitScreen" class="screen">
+        <h3 class="status-msg">في انتظار الخصم للانضمام والاختيار...</h3>
+    </div>
+
+    <!-- شاشة اللعب -->
+    <div id="gameScreen" class="screen">
+        <div class="my-choice">
+            شخصيتك السرية: <b id="myTargetName" style="color:var(--accent-blue);">...</b>
         </div>
-        <button onclick="leaveRoom()" class="gray" style="margin-top:15px;">إلغاء ورجوع</button>
-    </div>
-
-    <!-- 3. واجهة اللعبة -->
-    <div id="game-ui" class="hidden" style="width:100%; max-width:500px;">
-        <div id="grid" class="grid"></div>
-
-        <div class="chat-box">
-            <div id="messages" class="messages"><b>سجل الشات والأسئلة:</b></div>
-            <div class="chat-input">
-                <input type="text" id="questionInput" placeholder="اسأل سؤالك هنا...">
-                <button onclick="sendQuestion()">إرسال</button>
-            </div>
-            <div style="display:flex; gap:6px; margin-top:8px;">
-                <button onclick="sendAnswer('نعم! ✅')" style="background:#10b981; font-size:12px; padding:8px;">رد بـ (نعم ✅)</button>
-                <button onclick="sendAnswer('لا! ❌')" style="background:#ef4444; font-size:12px; padding:8px;">رد بـ (لا ❌)</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 4. نافذة إجراءات الكارت -->
-    <div id="action-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div class="modal-title" id="modal-card-name">اسم الكارت</div>
-            <div class="modal-actions">
-                <button class="btn-guess" onclick="executeAction('guess')">🎯 تخمين إنه كارت المنافس</button>
-                <button class="btn-eliminate" onclick="executeAction('eliminate')">❌ شطب / استبعاد الكارت</button>
-                <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 5. شاشة النتيجة -->
-    <div id="result-modal" class="modal-overlay hidden">
-        <div class="modal-content win-card">
-            <div class="win-icon" id="res-icon">🏆</div>
-            <div class="modal-title" id="res-title" style="font-size:22px; color:#fff;">مبروك الفوز!</div>
-            <div class="win-text" id="res-desc">خمنت الكارت الصح بنجاح!</div>
-            <button class="green" onclick="leaveRoom()">لعب مباراة جديدة 🔄</button>
-        </div>
+        <div class="grid" id="grid"></div>
+        <button class="btn btn-danger" onclick="leaveGame()">خروج</button>
     </div>
 
     <script>
-        let client = null;
-        let currentRoom = "";
-        let myClientId = "user_" + Math.random().toString(36).substring(7);
-        let mySecretPlayer = null;
-        let selectedCategory = 'players';
-        let activeCardIndex = null;
-        let activeCardName = "";
-
-        // قاعدة بيانات بالصور الحقيقية والدقيقة 100% من ويكيبيديا ومصادر رسمية
         const DATABASE = {
             players: [
-                { name: "محمد صلاح", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Mohamed_Salah_2018.jpg/400px-Mohamed_Salah_2018.jpg" },
-                { name: "أبو تريكة", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Mohamed_Aboutrika.jpg/400px-Mohamed_Aboutrika.jpg" },
-                { name: "ليونيل ميسي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Lionel-Messi-Argentina-2022-World-Cup_%28cropped%29.jpg/400px-Lionel-Messi-Argentina-2022-World-Cup_%28cropped%29.jpg" },
-                { name: "كريستيانو رونالدو", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Cristiano_Ronaldo_2018.jpg/400px-Cristiano_Ronaldo_2018.jpg" },
-                { name: "عمر مرموش", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Omar_Marmoush_2023.jpg/400px-Omar_Marmoush_2023.jpg" },
-                { name: "محمد الشناوي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Mohamed_El_Shenawy.jpg/400px-Mohamed_El_Shenawy.jpg" },
-                { name: "كيليان إمبابي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Kylian_Mbapp%C3%A9_2018.jpg/400px-Kylian_Mbapp%C3%A9_2018.jpg" },
-                { name: "إرلينج هالاند", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Erling_Haaland_2023.jpg/400px-Erling_Haaland_2023.jpg" },
-                { name: "زين الدين زيدان", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Zinedine_Zidane_by_Tasnim_03.jpg/400px-Zinedine_Zidane_by_Tasnim_03.jpg" },
-                { name: "لوكا مودريتش", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Luka_Modri%C3%A3_2018.jpg/400px-Luka_Modri%C3%A3_2018.jpg" },
-                { name: "كريم بنزيما", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Karim_Benzema_2018.jpg/400px-Karim_Benzema_2018.jpg" },
-                { name: "نيمار داسيلفا", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Neymar_Jr._with_Al_Hilal%2C_3_October_2023_01.jpg/400px-Neymar_Jr._with_Al_Hilal%2C_3_October_2023_01.jpg" },
-                { name: "مصطفى محمد", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Mostafa_Mohamed_2022.jpg/400px-Mostafa_Mohamed_2022.jpg" },
-                { name: "رونالدينيو", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Ronaldinho_11feb2007.jpg/400px-Ronaldinho_11feb2007.jpg" },
-                { name: "شيكابالا", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Shikabala_2018.jpg/400px-Shikabala_2018.jpg" }
+                { name: "محمد صلاح", img: "images/Salah.jpg" },
+                { name: "أبو تريكة", img: "images/Abu Trika.jpeg" },
+                { name: "ليونيل ميسي", img: "images/Messi.jpeg" },
+                { name: "كريستيانو رونالدو", img: "images/Ronaldo.webp" },
+                { name: "عمر مرموش", img: "images/Marmoush.webp" },
+                { name: "محمد الشناوي", img: "images/Shenawi.webp" },
+                { name: "كيليان إمبابي", img: "images/Mbappe.webp" },
+                { name: "إرلينج هالاند", img: "images/Haaland.webp" },
+                { name: "زين الدين زيدان", img: "images/Zidane.webp" },
+                { name: "لوكا مودريتش", img: "images/Modric.webp" },
+                { name: "كريم بنزيما", img: "images/Benzema.webp" },
+                { name: "نيمار داسيلفا", img: "images/Neymar.webp" },
+                { name: "مصطفى محمد", img: "images/Mustafa.webp" },
+                { name: "رونالدينيو", img: "images/Ronaldinho.webp" },
+                { name: "شيكابالا", img: "images/Chica.webp" }
             ],
             actors: [
-                { name: "عادل إمام", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Adel_Emam_2013.jpg/400px-Adel_Emam_2013.jpg" },
-                { name: "أحمد حلمي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Ahmed_Helmy_2019.jpg/400px-Ahmed_Helmy_2019.jpg" },
-                { name: "كريم عبد العزيز", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Karim_Abdel_Aziz_2021.jpg/400px-Karim_Abdel_Aziz_2021.jpg" },
-                { name: "أحمد السقا", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Ahmed_El_Sakka_2017.jpg/400px-Ahmed_El_Sakka_2017.jpg" },
-                { name: "محمد هنيدي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Mohamed_Henedi_2019.jpg/400px-Mohamed_Henedi_2019.jpg" },
-                { name: "توم كروز", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Tom_Cruise_by_Gage_Skidmore_2.jpg/400px-Tom_Cruise_by_Gage_Skidmore_2.jpg" },
-                { name: "ويل سميث", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/TechCrunch_Disrupt_2019_%2848834434641%29_%28cropped%29.jpg/400px-TechCrunch_Disrupt_2019_%2848834434641%29_%28cropped%29.jpg" },
-                { name: "ليوناردو دي كابريو", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Leonardo_DiCaprio_2014.jpg/400px-Leonardo_DiCaprio_2014.jpg" },
-                { name: "أمير كرارة", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Amir_Karara_2019.jpg/400px-Amir_Karara_2019.jpg" },
-                { name: "ماجد الكدواني", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Maged_El_Kedwany.jpg/400px-Maged_El_Kedwany.jpg" },
-                { name: "آسر ياسين", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Asser_Yassin_2019.jpg/400px-Asser_Yassin_2019.jpg" },
-                { name: "منى زكي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Mona_Zaki_2019.jpg/400px-Mona_Zaki_2019.jpg" },
-                { name: "ياسمين عبد العزيز", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Yasmin_Abdulaziz.jpg/400px-Yasmin_Abdulaziz.jpg" },
-                { name: "جاكي شان", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Jackie_Chan_July_2018.jpg/400px-Jackie_Chan_July_2018.jpg" },
-                { name: "ذا روك", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Dwayne_%22The_Rock%22_Johnson_2021.jpg/400px-Dwayne_%22The_Rock%22_Johnson_2021.jpg" }
+                { name: "عادل إمام", img: "images/Adel.jpg" },
+                { name: "أحمد حلمي", img: "images/Helmy.jpg" },
+                { name: "كريم عبد العزيز", img: "images/Karim.jpg" },
+                { name: "أحمد السقا", img: "images/Sakka.jpg" },
+                { name: "محمد هنيدي", img: "images/Henedy.jpg" },
+                { name: "توم كروز", img: "images/Tom.jpg" },
+                { name: "ويل سميث", img: "images/Will.jpg" },
+                { name: "ليوناردو دي كابريو", img: "images/Leo.jpg" },
+                { name: "أمير كرارة", img: "images/Karara.jpg" },
+                { name: "ماجد الكدواني", img: "images/Maged.jpg" },
+                { name: "آسر ياسين", img: "images/Asser.jpg" },
+                { name: "منى زكي", img: "images/Mona.jpg" },
+                { name: "ياسمين عبد العزيز", img: "images/Yasmin.jpg" },
+                { name: "جاكي شان", img: "images/Jackie.jpg" },
+                { name: "ذا روك", img: "images/Rock.jpg" }
             ],
             movies: [
-                { name: "الجزيرة", img: "https://upload.wikimedia.org/wikipedia/ar/d/d3/El-Gezira_film.jpg" },
-                { name: "الفيل الأزرق", img: "https://upload.wikimedia.org/wikipedia/ar/6/69/The_Blue_Elephant_poster.jpg" },
-                { name: "ولاد رزق", img: "https://upload.wikimedia.org/wikipedia/ar/4/41/Welad_Rizk_poster.jpg" },
-                { name: "Avatar", img: "https://upload.wikimedia.org/wikipedia/en/d/d6/Avatar_%282009_film%29_poster.jpg" },
-                { name: "Titanic", img: "https://upload.wikimedia.org/wikipedia/en/1/18/Titanic_%281997_film%29_poster.png" },
-                { name: "كازابلانكا", img: "https://upload.wikimedia.org/wikipedia/ar/6/6a/Casablanca_Egyptian_movie.jpg" },
-                { name: "كيرة والجن", img: "https://upload.wikimedia.org/wikipedia/ar/0/07/%D0%9A%D0%B8%D1%80%D0%B0_%D0%B8_%D0%B0%D0%BB%D1%8C-%D0%94%D0%B6%D0%B8%D0%BD.jpg" },
-                { name: "Inception", img: "https://upload.wikimedia.org/wikipedia/en/2/2e/Inception_%282010%29_theatrical_poster.jpg" },
-                { name: "Interstellar", img: "https://upload.wikimedia.org/wikipedia/en/b/bc/Interstellar_film_poster.jpg" },
-                { name: "Joker", img: "https://upload.wikimedia.org/wikipedia/en/e/e1/Joker_%282019_film%29_poster.jpg" },
-                { name: "The Dark Knight", img: "https://upload.wikimedia.org/wikipedia/en/1/1c/The_Dark_Knight_%282008_film%29_poster.jpg" },
-                { name: "Avengers", img: "https://upload.wikimedia.org/wikipedia/en/8/8a/The_Avengers_%282012_film%29_poster.jpg" },
-                { name: "إبراهيم الأبيض", img: "https://upload.wikimedia.org/wikipedia/ar/1/17/Ibrahim_Labyad_poster.jpg" },
-                { name: "صعيدي في الجامعة", img: "https://upload.wikimedia.org/wikipedia/ar/2/29/Sa%27edi_Fi_El_Jami%27a_El_Amrekiya.jpg" },
-                { name: "عسل أسود", img: "https://upload.wikimedia.org/wikipedia/ar/0/08/Assal_Eswed_Poster.jpg" }
+                { name: "الجزيرة", img: "images/Gezira.jpg" },
+                { name: "الفيل الأزرق", img: "images/Elephant.jpg" },
+                { name: "ولاد رزق", img: "images/Rizk.jpg" },
+                { name: "Avatar", img: "images/Avatar.jpg" },
+                { name: "Titanic", img: "images/Titanic.jpg" },
+                { name: "كازابلانكا", img: "images/Casablanca.jpg" },
+                { name: "كيرة والجن", img: "images/Kira.jpg" },
+                { name: "Inception", img: "images/Inception.jpg" },
+                { name: "Interstellar", img: "images/Interstellar.jpg" },
+                { name: "Joker", img: "images/Joker.jpg" },
+                { name: "The Dark Knight", img: "images/Batman.jpg" },
+                { name: "Avengers", img: "images/Avengers.jpg" },
+                { name: "إبراهيم الأبيض", img: "images/Ibrahim.jpg" },
+                { name: "صعيدي في الجامعة", img: "images/Saedi.jpg" },
+                { name: "عسل أسود", img: "images/Assal.jpg" }
             ],
             food: [
-                { name: "كشري", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Kushari_in_Cairo.jpg/400px-Kushari_in_Cairo.jpg" },
-                { name: "بيتزا", img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&auto=format&fit=crop" },
-                { name: "برجر", img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&auto=format&fit=crop" },
-                { name: "ملوخية", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Mulukhiyah_Egyptian_style.jpg/400px-Mulukhiyah_Egyptian_style.jpg" },
-                { name: "شاورما", img: "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=400&auto=format&fit=crop" },
-                { name: "طعمة / فلافل", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Ta%27ameya.jpg/400px-Ta%27ameya.jpg" },
-                { name: "فول مدمس", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Ful_medames_egypt.jpg/400px-Ful_medames_egypt.jpg" },
-                { name: "فتة مصرية", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Egyptian_Fatteh.jpg/400px-Egyptian_Fatteh.jpg" },
-                { name: "حواوشي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Hawawshi.jpg/400px-Hawawshi.jpg" },
-                { name: "سوشي", img: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&auto=format&fit=crop" },
-                { name: "كبسة", img: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400&auto=format&fit=crop" },
-                { name: "أم علي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Om_Ali_dessert.jpg/400px-Om_Ali_dessert.jpg" },
-                { name: "بشاميل", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Macaroni_bechamel.jpg/400px-Macaroni_bechamel.jpg" },
-                { name: "كباب وكفتة", img: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&auto=format&fit=crop" },
-                { name: "وافل", img: "https://images.unsplash.com/photo-1562376552-0d160a2f238d?w=400&auto=format&fit=crop" }
+                { name: "كشري", img: "images/Koshary.jpg" },
+                { name: "بيتزا", img: "images/Pizza.jpg" },
+                { name: "برجر", img: "images/Burger.jpg" },
+                { name: "ملوخية", img: "images/Molokhia.jpg" },
+                { name: "شاورما", img: "images/Shawarma.jpg" },
+                { name: "طعمة / فلافل", img: "images/Falafel.jpg" },
+                { name: "فول مدمس", img: "images/Ful.jpg" },
+                { name: "فتة مصرية", img: "images/Fatteh.jpg" },
+                { name: "حواوشي", img: "images/Hawawshi.jpg" },
+                { name: "سوشي", img: "images/Sushi.jpg" },
+                { name: "كبسة", img: "images/Kabsa.jpg" },
+                { name: "أم علي", img: "images/OmAli.jpg" },
+                { name: "بشاميل", img: "images/Bechamel.jpg" },
+                { name: "كباب وكفتة", img: "images/Kebab.jpg" },
+                { name: "وافل", img: "images/Waffle.jpg" }
             ]
         };
 
-        function startCreateRoom() {
-            document.getElementById('mode-box').classList.add('hidden');
-            document.getElementById('category-box').classList.remove('hidden');
+        let peer = null;
+        let conn = null;
+        let myTarget = null;
+        let currentCategory = 'players';
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
         }
 
-        function confirmCategory(cat) {
-            selectedCategory = cat;
-            document.getElementById('category-box').classList.add('hidden');
-            const code = "ABDO-" + Math.floor(1000 + Math.random() * 9000);
-            connectMQTT(code, true);
+        function createRoom() {
+            const randomCode = "ABDO-" + Math.floor(1000 + Math.random() * 9000);
+            peer = new Peer(randomCode);
+
+            peer.on('open', (id) => {
+                document.getElementById('codeText').innerText = id;
+                document.getElementById('roomDisplay').style.display = 'block';
+                showScreen('categoryScreen');
+            });
+
+            peer.on('connection', (c) => {
+                conn = c;
+                setupConnection();
+            });
         }
 
         function joinRoom() {
-            const code = document.getElementById('joinCodeInput').value.trim();
-            if(!code) return showCustomResult("❌ خطأ", "يرجى كتابة كود الغرفة أولاً!", "⚠️");
-            document.getElementById('mode-box').classList.add('hidden');
-            connectMQTT(code, false);
+            const code = document.getElementById('joinCode').value.trim();
+            if (!code) return alert("من فضلك أدخل كود الغرفة");
+
+            peer = new Peer();
+            peer.on('open', () => {
+                conn = peer.connect(code);
+                setupConnection();
+                showScreen('waitScreen');
+            });
         }
 
-        function connectMQTT(roomCode, isHost) {
-            document.getElementById('status').innerText = "جاري الاتصال بالسيرفر...";
-            client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+        function selectCategory(cat) {
+            currentCategory = cat;
+            if (conn && conn.open) {
+                conn.send({ type: 'start', category: cat });
+                startGame(cat);
+            } else {
+                showScreen('waitScreen');
+            }
+        }
 
-            client.on('connect', () => {
-                currentRoom = "abdo_game_room_" + roomCode;
-                client.subscribe(currentRoom);
-
-                document.getElementById('activeRoomCode').innerText = roomCode;
-                document.getElementById('roomBar').classList.remove('hidden');
-                document.getElementById('game-ui').classList.remove('hidden');
-                document.getElementById('status').innerText = "اختر كارتك السرّي بالضغط عليه!";
-
-                if (!isHost) {
-                    sendMessage({ type: 'get_category' });
-                } else {
-                    renderBoard();
-                }
-
-                sendMessage({ type: 'join' });
-            });
-
-            client.on('message', (topic, message) => {
-                const data = JSON.parse(message.toString());
-                if (data.sender === myClientId) return;
-
-                if (data.type === 'chat') {
-                    addMessage("المنافس", data.text);
-                } else if (data.type === 'get_category' && isHost) {
-                    sendMessage({ type: 'set_category', category: selectedCategory });
-                } else if (data.type === 'set_category') {
-                    selectedCategory = data.category;
-                    renderBoard();
-                } else if (data.type === 'guess') {
-                    if (data.name === mySecretPlayer) {
-                        showCustomResult("❌ للأسف خسرت!", `المنافس خمن كارتك السرّي صح وهو (${mySecretPlayer})`, "💔");
-                        sendMessage({ type: 'win_ack' });
-                    } else {
-                        addMessage("النظام", `المنافس خمن (${data.name}) وكانت إجابة خاطئة!`);
-                    }
-                } else if (data.type === 'win_ack') {
-                    showCustomResult("🎉 مبروك الفوز!", `تخمينك كان صح! وفزت في اللعبة!`, "🏆");
-                } else if (data.type === 'join') {
-                    addMessage("النظام", "انضم المنافس للغرفة! بالتوفيق 🚀");
+        function setupConnection() {
+            conn.on('data', (data) => {
+                if (data.type === 'start') {
+                    startGame(data.category);
                 }
             });
         }
 
-        function leaveRoom() {
-            if (client) { client.end(); client = null; }
-            location.reload();
-        }
+        function startGame(cat) {
+            const list = DATABASE[cat];
+            myTarget = list[Math.floor(Math.random() * list.length)];
+            document.getElementById('myTargetName').innerText = myTarget.name;
 
-        function renderBoard() {
             const grid = document.getElementById('grid');
-            grid.innerHTML = "";
-            const items = DATABASE[selectedCategory];
+            grid.innerHTML = '';
 
-            items.forEach((item, index) => {
+            list.forEach((item) => {
                 const card = document.createElement('div');
                 card.className = 'card';
-                card.id = `card-${index}`;
-                
-                card.innerHTML = `
-                    <div class="card-img-container">
-                        <img src="${item.img}" alt="${item.name}" onerror="this.src='https://via.placeholder.com/150?text=صورة'">
-                    </div>
-                    <span>${item.name}</span>
-                `;
-                card.onclick = () => handleCardClick(index, item.name);
+                card.innerHTML = `<img src="${item.img}" alt="${item.name}"><span>${item.name}</span>`;
+                card.onclick = () => card.classList.toggle('eliminated');
                 grid.appendChild(card);
             });
+
+            showScreen('gameScreen');
         }
 
-        function handleCardClick(index, name) {
-            if (!mySecretPlayer) {
-                mySecretPlayer = name;
-                document.getElementById(`card-${index}`).classList.add('my-choice');
-                document.getElementById('status').innerText = `كارتك السرّي: (${name}). اضغط على باقي الكروت للخيارات!`;
-                return;
-            }
-
-            activeCardIndex = index;
-            activeCardName = name;
-            document.getElementById('modal-card-name').innerText = name;
-            document.getElementById('action-modal').classList.remove('hidden');
-        }
-
-        function closeModal() {
-            document.getElementById('action-modal').classList.add('hidden');
-        }
-
-        function executeAction(type) {
-            closeModal();
-            const card = document.getElementById(`card-${activeCardIndex}`);
-
-            if (type === 'eliminate') {
-                card.classList.add('eliminated');
-            } else if (type === 'guess') {
-                sendMessage({ type: 'guess', name: activeCardName });
-                addMessage("أنت", `خمنت أن كارت المنافس هو: ${activeCardName}`);
-            }
-        }
-
-        function sendQuestion() {
-            const q = document.getElementById('questionInput').value.trim();
-            if(!q) return;
-            addMessage("أنت", q);
-            sendMessage({ type: 'chat', text: q });
-            document.getElementById('questionInput').value = "";
-        }
-
-        function sendAnswer(ans) {
-            addMessage("أنت", ans);
-            sendMessage({ type: 'chat', text: "الإجابة: " + ans });
-        }
-
-        function sendMessage(obj) {
-            if (client && currentRoom) {
-                obj.sender = myClientId;
-                client.publish(currentRoom, JSON.stringify(obj));
-            }
-        }
-
-        function addMessage(sender, text) {
-            const msgDiv = document.getElementById('messages');
-            msgDiv.innerHTML += `<div class="msg"><b>${sender}:</b> ${text}</div>`;
-            msgDiv.scrollTop = msgDiv.scrollHeight;
-        }
-
-        function showCustomResult(title, desc, icon) {
-            document.getElementById('res-title').innerText = title;
-            document.getElementById('res-desc').innerText = desc;
-            document.getElementById('res-icon').innerText = icon;
-            document.getElementById('result-modal').classList.remove('hidden');
+        function leaveGame() {
+            location.reload();
         }
     </script>
 </body>
 </html>
+
