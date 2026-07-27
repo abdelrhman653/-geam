@@ -3,611 +3,239 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لعبة مين في صفي - النسخة المتطورة</title>
+    <title>اقف في صفي - أونلاين أسرع وأقوى</title>
+    <!-- مكتبة الربط المباشر P2P الأونلاين -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background: #0f172a; color: #fff; display: flex; flex-direction: column; align-items: center; padding: 10px; min-height: 100vh; }
+        
+        h1 { color: #38bdf8; font-size: 22px; margin-bottom: 5px; text-align: center; }
+        .subtitle { color: #94a3b8; font-size: 12px; margin-bottom: 10px; }
 
-        body {
-            background: linear-gradient(135deg, #0f172a, #1e1b4b);
-            color: #f8fafc;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding: 15px;
+        /* شاشة الدخول والأونلاين */
+        .online-box {
+            background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 12px;
+            width: 100%; max-width: 500px; text-align: center; margin-bottom: 10px;
         }
+        input { width: 100%; padding: 10px; margin: 5px 0; background: #0f172a; border: 1px solid #475569; color: #fff; border-radius: 6px; text-align: center; }
+        button { width: 100%; padding: 10px; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        button.green { background: #10b981; }
 
-        .header-box {
-            text-align: center;
-            margin-bottom: 15px;
-        }
+        /* الفئات */
+        .categories { display: flex; gap: 5px; overflow-x: auto; width: 100%; max-width: 500px; margin-bottom: 10px; padding-bottom: 5px; }
+        .cat-btn { background: #334155; color: #38bdf8; border: none; padding: 6px 12px; border-radius: 15px; font-size: 12px; white-space: nowrap; }
+        .cat-btn.active { background: #38bdf8; color: #0f172a; font-weight: bold; }
 
-        h1 {
-            color: #38bdf8;
-            font-size: 26px;
-            text-shadow: 0 2px 10px rgba(56, 189, 248, 0.3);
-        }
+        /* شبكة الكروت */
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; max-width: 500px; }
+        .card { background: #1e293b; border: 2px solid #334155; border-radius: 8px; padding: 8px 2px; text-align: center; cursor: pointer; }
+        .card .icon { font-size: 24px; }
+        .card span { font-size: 10px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .card.my-choice { border-color: #f59e0b; background: #78350f; }
+        .card.eliminated { opacity: 0.2; filter: grayscale(100%); background: #450a0a; border-color: #ef4444; }
 
-        .net-status {
-            font-size: 11px;
-            padding: 3px 10px;
-            border-radius: 20px;
-            margin-top: 5px;
-            display: inline-block;
-            font-weight: bold;
-        }
-        .online { background: #065f46; color: #34d399; }
-        .offline { background: #7f1d1d; color: #fca5a5; }
-
-        /* شاشة البداية والغرف */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 15px;
-        }
-
-        .modal-card {
-            background: #1e293b;
-            border: 1px solid #334155;
-            padding: 25px;
-            border-radius: 16px;
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.6);
-        }
-
-        .modal-card input {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            background: #0f172a;
-            border: 1px solid #475569;
-            color: #fff;
-            border-radius: 8px;
-            font-size: 15px;
-            text-align: center;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 15px;
-            margin-top: 8px;
-            transition: 0.2s;
-        }
-        .btn-primary { background: #2563eb; color: white; }
-        .btn-primary:hover { background: #1d4ed8; }
-        .btn-success { background: #10b981; color: white; }
-        .btn-success:hover { background: #059669; }
-        .btn-secondary { background: #475569; color: white; }
-
-        /* التحكم والفئات */
-        .category-select {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-bottom: 12px;
-            max-width: 700px;
-        }
-
-        .cat-btn {
-            background: #1e293b;
-            color: #38bdf8;
-            border: 1px solid #334155;
-            padding: 7px 12px;
-            border-radius: 20px;
-            font-size: 13px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .cat-btn.active, .cat-btn:hover {
-            background: #38bdf8;
-            color: #0f172a;
-            font-weight: bold;
-        }
-
-        .status-bar {
-            background: #1e293b;
-            width: 100%;
-            max-width: 700px;
-            padding: 12px;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 14px;
-            color: #f59e0b;
-            margin-bottom: 15px;
-            border: 1px solid #334155;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
-        }
-
-        /* شبكة الكروت الكبيرة */
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 10px;
-            width: 100%;
-            max-width: 700px;
-            margin-bottom: 15px;
-        }
-
-        .card {
-            background: #1e293b;
-            border: 2px solid #334155;
-            border-radius: 10px;
-            padding: 8px 4px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-        }
-
-        .card:hover {
-            border-color: #38bdf8;
-            transform: translateY(-3px);
-        }
-
-        .card .icon {
-            font-size: 28px;
-            margin-bottom: 5px;
-        }
-
-        .card span {
-            font-size: 11px;
-            font-weight: bold;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            width: 100%;
-        }
-
-        .card.eliminated {
-            background: #450a0a;
-            border-color: #ef4444;
-            opacity: 0.3;
-            filter: grayscale(100%);
-        }
-
-        .card.correct {
-            background: #065f46;
-            border-color: #34d399;
-            animation: bounce 0.5s;
-        }
-
-        /* الأسئلة */
-        .questions-section {
-            background: #1e293b;
-            width: 100%;
-            max-width: 700px;
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid #334155;
-            margin-bottom: 15px;
-        }
-
-        .questions-title {
-            font-size: 13px;
-            color: #94a3b8;
-            margin-bottom: 8px;
-        }
-
-        .questions-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-
-        .q-btn {
-            background: #334155;
-            color: white;
-            border: none;
-            padding: 7px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .q-btn:hover { background: #2563eb; }
-        .q-btn:disabled { background: #0f172a; color: #64748b; cursor: not-allowed; }
+        /* شات الأسئلة للأونلاين */
+        .chat-box { background: #1e293b; width: 100%; max-width: 500px; border-radius: 8px; padding: 10px; margin-top: 10px; border: 1px solid #334155; }
+        .messages { max-height: 100px; overflow-y: auto; font-size: 12px; margin-bottom: 8px; text-align: right; }
+        .msg { padding: 4px; border-bottom: 1px solid #334155; }
+        .chat-input { display: flex; gap: 5px; }
+        .chat-input input { margin: 0; }
+        .chat-input button { width: auto; padding: 0 15px; }
 
         .hidden { display: none !important; }
     </style>
-
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCPLSt21cRCgUsL3QA2TakbI0af07zQKsM",
-            authDomain: "whoisitgame.firebaseapp.com",
-            databaseURL: "https://whoisitgame-default-rtdb.firebaseio.com",
-            projectId: "whoisitgame",
-            storageBucket: "whoisitgame.firebasestorage.app",
-            messagingSenderId: "347423883446",
-            appId: "1:347423883446:web:9c435668649ec0e8d76617"
-        };
-
-        let app, db;
-        try {
-            app = initializeApp(firebaseConfig);
-            db = getDatabase(app);
-        } catch(e) {}
-
-        window.db = db;
-        window.ref = ref;
-        window.set = set;
-        window.onValue = onValue;
-        window.update = update;
-    </script>
 </head>
 <body>
 
-    <!-- نافذة البداية واختيار اللعب أونلاين أو ضد الكمبيوتر -->
-    <div id="startModal" class="modal-overlay">
-        <div class="modal-card">
-            <h2 style="color: #38bdf8; margin-bottom: 10px;">🎮 اقف في صفي المتطورة</h2>
-            <p style="color: #94a3b8; font-size: 13px; margin-bottom: 15px;">اختر طريقة اللعب المناسبة لك</p>
-            
-            <input type="text" id="playerName" placeholder="اكتب اسمك هنا..." maxlength="15">
-            
-            <button class="btn btn-success" onclick="startVsBot()">🤖 اللعب ضد الكمبيوتر (أوفلاين)</button>
-            <hr style="border-color: #334155; margin: 15px 0;">
-            <button class="btn btn-primary" onclick="createRoomCode()">🌐 إنشاء غرفة أونلاين</button>
-            <input type="text" id="roomCodeInput" placeholder="أدخل كود الغرفة للانضمام..." style="margin-top: 10px;">
-            <button class="btn btn-secondary" onclick="joinRoomCode()">انضمام للغرفة 🚀</button>
-        </div>
-    </div>
+    <h1>🎮 اقف في صفي (أونلاين)</h1>
+    <div class="subtitle" id="status">اكتب اسمك وأنشئ غرفة أو انضم لصاحبك!</div>
 
-    <div class="header-box">
-        <h1>⚽ اقف في صفي</h1>
-        <div id="netStatus" class="net-status offline">جاري الفحص...</div>
+    <!-- التحكم في الأونلاين -->
+    <div id="setup-box" class="online-box">
+        <input type="text" id="myCodeDisplay" readonly placeholder="كود الغرفة الخاص بك سيظهر هنا..." style="color:#38bdf8; font-weight:bold;">
+        <button onclick="createOnlineRoom()" class="green">🌐 إنشاء كود غرفة أونلاين</button>
+        <hr style="border-color:#334155; margin:10px 0;">
+        <input type="text" id="joinCodeInput" placeholder="أدخل كود غرفة صاحبك هنا...">
+        <button onclick="joinOnlineRoom()">انضمام لغرفة صاحبك 🚀</button>
     </div>
 
     <!-- الفئات -->
-    <div class="category-select">
-        <button class="cat-btn active" onclick="changeCategory('players')">⚽ لاعيبة كرة</button>
-        <button class="cat-btn" onclick="changeCategory('actors')">🎬 مشاهير وممثلين</button>
-        <button class="cat-btn" onclick="changeCategory('movies')">🍿 أفلام</button>
-        <button class="cat-btn" onclick="changeCategory('jobs')">💼 وظائف</button>
-        <button class="cat-btn" onclick="changeCategory('food')">🍔 أكل</button>
-        <button class="cat-btn" onclick="changeCategory('animals')">🦁 حيوانات</button>
-    </div>
+    <div id="game-ui" class="hidden" style="width:100%; max-width:500px;">
+        <div class="categories">
+            <button class="cat-btn active" onclick="setCategory('players')">⚽ لاعيبة</button>
+            <button class="cat-btn" onclick="setCategory('actors')">🎬 مشاهير</button>
+            <button class="cat-btn" onclick="setCategory('movies')">🍿 أفلام</button>
+            <button class="cat-btn" onclick="setCategory('food')">🍔 أكل</button>
+            <button class="cat-btn" onclick="setCategory('animals')">🦁 حيوانات</button>
+        </div>
 
-    <div id="status" class="status-bar">اختر سؤالاً لاستبعاد الخيارات، أو اضغط على العنصر مباشرة!</div>
+        <!-- شبكة العناصر -->
+        <div id="grid" class="grid"></div>
 
-    <!-- الشبكة -->
-    <div id="grid" class="grid-container"></div>
-
-    <!-- الأسئلة -->
-    <div class="questions-section">
-        <div class="questions-title">🔍 أسئلة الاستبعاد (اضغط لسؤال الخصم):</div>
-        <div id="questions" class="questions-list"></div>
+        <!-- شات المحادثة والأسئلة المباشرة -->
+        <div class="chat-box">
+            <div id="messages" class="messages"><b>سجل الأسئلة والإجابات:</b></div>
+            <div class="chat-input">
+                <input type="text" id="questionInput" placeholder="اسأل صاحبك أي سؤال (مثلاً: هل بيلعب برجله الشمال؟)...">
+                <button onclick="sendQuestion()">إرسال</button>
+            </div>
+            <div style="display:flex; gap:5px; margin-top:5px;">
+                <button onclick="sendAnswer('نعم! ✅')" style="background:#10b981; font-size:11px;">رد بـ (نعم)</button>
+                <button onclick="sendAnswer('لا! ❌')" style="background:#ef4444; font-size:11px;">رد بـ (لا)</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // الأصوات التفاعلية (بدون ملفات خارجية)
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playSound(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
+        let peer = null;
+        let conn = null;
+        let mySecretPlayer = null;
+        let currentCategory = 'players';
 
-            if (type === 'click') {
-                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.08);
-            } else if (type === 'correct') {
-                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 0.2);
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.3);
-            } else if (type === 'wrong') {
-                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-                osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.2);
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.25);
-            }
-        }
-
-        // قاعدة بيانات ضخمة وممتعة
         const DATABASE = {
-            players: {
-                items: [
-                    { name: "محمد صلاح", icon: "🇪🇬", attr: { retired: false, egyptian: true, europe: true } },
-                    { name: "أبو تريكة", icon: "👑", attr: { retired: true, egyptian: true, europe: false } },
-                    { name: "ميسي", icon: "🇦🇷", attr: { retired: false, egyptian: false, europe: false } },
-                    { name: "رونالدو", icon: "🇵🇹", attr: { retired: false, egyptian: false, europe: false } },
-                    { name: "زيدان", icon: "🇫🇷", attr: { retired: true, egyptian: false, europe: true } },
-                    { name: "مرموش", icon: "🦅", attr: { retired: false, egyptian: true, europe: true } },
-                    { name: "بنزيما", icon: "🇫🇷", attr: { retired: false, egyptian: false, europe: false } },
-                    { name: "الشناوي", icon: "🧤", attr: { retired: false, egyptian: true, europe: false } },
-                    { name: "مودريتش", icon: "🇭🇷", attr: { retired: false, egyptian: false, europe: true } },
-                    { name: "رونالدينيو", icon: "🤙", attr: { retired: true, egyptian: false, europe: true } },
-                    { name: "ميدو", icon: "🎙️", attr: { retired: true, egyptian: true, europe: true } },
-                    { name: "إمبابي", icon: "⚡", attr: { retired: false, egyptian: false, europe: true } },
-                    { name: "هالاند", icon: "🤖", attr: { retired: false, egyptian: false, europe: true } },
-                    { name: "نيمار", icon: "🇧🇷", attr: { retired: false, egyptian: false, europe: false } },
-                    { name: "إبراهيموفيتش", icon: "🦁", attr: { retired: true, egyptian: false, europe: true } },
-                    { name: "بوفون", icon: "🧱", attr: { retired: true, egyptian: false, europe: true } }
-                ],
-                questions: [
-                    { label: "هل اللاعب معتزل؟", key: "retired" },
-                    { label: "هل اللاعب يحمل الجنسية المصرية؟", key: "egyptian" },
-                    { label: "هل يلعب حالياً في أوروبا؟", key: "europe" }
-                ]
-            },
-            actors: {
-                items: [
-                    { name: "عادل إمام", icon: "🕶️", attr: { egyptian: true, classic: true } },
-                    { name: "أحمد حلمي", icon: "👓", attr: { egyptian: true, classic: false } },
-                    { name: "توم كروز", icon: "🎬", attr: { egyptian: false, classic: true } },
-                    { name: "ويل سميث", icon: "🎭", attr: { egyptian: false, classic: false } },
-                    { name: "كريم عبد العزيز", icon: "🌟", attr: { egyptian: true, classic: false } },
-                    { name: "أحمد السقا", icon: "🐎", attr: { egyptian: true, classic: false } },
-                    { name: "دي كابريو", icon: "🏆", attr: { egyptian: false, classic: false } },
-                    { name: "محمود عبد العزيز", icon: "🎩", attr: { egyptian: true, classic: true } },
-                    { name: "محمد هنيدي", icon: "😄", attr: { egyptian: true, classic: true } },
-                    { name: "روبرت داوني", icon: "🦾", attr: { egyptian: false, classic: false } }
-                ],
-                questions: [
-                    { label: "هل الممثل مصري؟", key: "egyptian" },
-                    { label: "هل من الجيل القديم/الكلاسيكي؟", key: "classic" }
-                ]
-            },
-            movies: {
-                items: [
-                    { name: "الجزيرة", icon: "🏝️", attr: { arabic: true, action: true } },
-                    { name: "إبراهيم الأبيض", icon: "🔪", attr: { arabic: true, action: true } },
-                    { name: "Avatar", icon: "🌌", attr: { arabic: false, action: true } },
-                    { name: "Titanic", icon: "🚢", attr: { arabic: false, action: false } },
-                    { name: "الفيل الأزرق", icon: "🐘", attr: { arabic: true, action: false } },
-                    { name: "Inception", icon: "🌀", attr: { arabic: false, action: true } },
-                    { name: "ولاد رزق", icon: "🔥", attr: { arabic: true, action: true } },
-                    { name: "Interstellar", icon: "🚀", attr: { arabic: false, action: false } }
-                ],
-                questions: [
-                    { label: "هل الفيلم عربي؟", key: "arabic" },
-                    { label: "هل الفيلم تصنيفه أكشن؟", key: "action" }
-                ]
-            },
-            jobs: {
-                items: [
-                    { name: "طبيب", icon: "🩺", attr: { degree: true, outdoor: false } },
-                    { name: "مهندس", icon: "🏗️", attr: { degree: true, outdoor: true } },
-                    { name: "طيار", icon: "✈️", attr: { degree: true, outdoor: true } },
-                    { name: "طباخ", icon: "👨‍🍳", attr: { degree: false, outdoor: false } },
-                    { name: "مبرمج", icon: "💻", attr: { degree: false, outdoor: false } },
-                    { name: "رجل إطفاء", icon: "🚒", attr: { degree: false, outdoor: true } },
-                    { name: "محامي", icon: "⚖️", attr: { degree: true, outdoor: false } },
-                    { name: "شرطي", icon: "👮‍♂️", attr: { degree: false, outdoor: true } }
-                ],
-                questions: [
-                    { label: "هل تحتاج هذه الوظيفة شهادة جامعية؟", key: "degree" },
-                    { label: "هل العمل ميداني/خارجي؟", key: "outdoor" }
-                ]
-            },
-            food: {
-                items: [
-                    { name: "كشري", icon: "🍲", attr: { salty: true, egyptian: true } },
-                    { name: "بيتزا", icon: "🍕", attr: { salty: true, egyptian: false } },
-                    { name: "أم علي", icon: "🍨", attr: { salty: false, egyptian: true } },
-                    { name: "وافل", icon: "🧇", attr: { salty: false, egyptian: false } },
-                    { name: "ملوخية", icon: "🌿", attr: { salty: true, egyptian: true } },
-                    { name: "برجر", icon: "🍔", attr: { salty: true, egyptian: false } },
-                    { name: "فطير مشلتت", icon: "🥮", attr: { salty: true, egyptian: true } },
-                    { name: "آيس كريم", icon: "🍦", attr: { salty: false, egyptian: false } }
-                ],
-                questions: [
-                    { label: "هل الأكل طعم حادق/مالح؟", key: "salty" },
-                    { label: "هل الأكلة أصلها مصري؟", key: "egyptian" }
-                ]
-            },
-            animals: {
-                items: [
-                    { name: "أسد", icon: "🦁", attr: { predator: true, fly: false } },
-                    { name: "صقر", icon: "🦅", attr: { predator: true, fly: true } },
-                    { name: "أرنب", icon: "🐇", attr: { predator: false, fly: false } },
-                    { name: "حمامة", icon: "🕊️", attr: { predator: false, fly: true } },
-                    { name: "قرش", icon: "🦈", attr: { predator: true, fly: false } },
-                    { name: "زرافة", icon: "🦒", attr: { predator: false, fly: false } },
-                    { name: "نمر", icon: "🐅", attr: { predator: true, fly: false } },
-                    { name: "بطريق", icon: "🐧", attr: { predator: false, fly: false } }
-                ],
-                questions: [
-                    { label: "هل الحيوان مفترس؟", key: "predator" },
-                    { label: "هل يستطيع الطيران؟", key: "fly" }
-                ]
-            }
+            players: [
+                { name: "محمد صلاح", icon: "🇪🇬" }, { name: "أبو تريكة", icon: "👑" }, { name: "ميسي", icon: "🇦🇷" }, { name: "رونالدو", icon: "🇵🇹" },
+                { name: "زيدان", icon: "🇫🇷" }, { name: "مرموش", icon: "🦅" }, { name: "بنزيما", icon: "🇫🇷" }, { name: "الشناوي", icon: "🧤" },
+                { name: "مودريتش", icon: "🇭🇷" }, { name: "رونالدينيو", icon: "🤙" }, { name: "إمبابي", icon: "⚡" }, { name: "هالاند", icon: "🤖" },
+                { name: "نيمار", icon: "🇧🇷" }, { name: "بوفون", icon: "🧱" }, { name: "ميدو", icon: "🎙️" }, { name: "مالديني", icon: "🛡️" }
+            ],
+            actors: [
+                { name: "عادل إمام", icon: "🕶️" }, { name: "أحمد حلمي", icon: "👓" }, { name: "توم كروز", icon: "🎬" }, { name: "ويل سميث", icon: "🎭" },
+                { name: "كريم عبد العزيز", icon: "🌟" }, { name: "أحمد السقا", icon: "🐎" }, { name: "دي كابريو", icon: "🏆" }, { name: "هنيدي", icon: "😄" }
+            ],
+            movies: [
+                { name: "الجزيرة", icon: "🏝️" }, { name: "إبراهيم الأبيض", icon: "🔪" }, { name: "Avatar", icon: "🌌" }, { name: "Titanic", icon: "🚢" },
+                { name: "الفيل الأزرق", icon: "🐘" }, { name: "Inception", icon: "🌀" }, { name: "ولاد رزق", icon: "🔥" }, { name: "Interstellar", icon: "🚀" }
+            ],
+            food: [
+                { name: "كشري", icon: "🍲" }, { name: "بيتزا", icon: "🍕" }, { name: "أم علي", icon: "🍨" }, { name: "برجر", icon: "🍔" },
+                { name: "ملوخية", icon: "🌿" }, { name: "شاورما", icon: "🥙" }, { name: "فطير", icon: "🥮" }, { name: "آيس كريم", icon: "🍦" }
+            ],
+            animals: [
+                { name: "أسد", icon: "🦁" }, { name: "صقر", icon: "🦅" }, { name: "أرنب", icon: "🐇" }, { name: "قرش", icon: "🦈" },
+                { name: "زرافة", icon: "🦒" }, { name: "نمر", icon: "🐅" }, { name: "بطريق", icon: "🐧" }, { name: "دب", icon: "🐻" }
+            ]
         };
 
-        let currentCategory = 'players';
-        let secretItem = null;
-        let gameOver = false;
-        let playerName = "اللاعب";
-        let roomId = "";
-        let isOnline = false;
-
-        function checkNet() {
-            const netTag = document.getElementById('netStatus');
-            if (navigator.onLine) {
-                netTag.innerText = "متصل بالإنترنت 🟢";
-                netTag.className = "net-status online";
-            } else {
-                netTag.innerText = "غير متصل 🔴 (وضع أوفلاين)";
-                netTag.className = "net-status offline";
-            }
-        }
-        window.addEventListener('online', checkNet);
-        window.addEventListener('offline', checkNet);
-        checkNet();
-
-        function changeCategory(cat) {
-            playSound('click');
-            currentCategory = cat;
-            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            initGame();
-        }
-
-        function startVsBot() {
-            const nameInput = document.getElementById('playerName').value.trim();
-            if(nameInput) playerName = nameInput;
-            isOnline = false;
-            document.getElementById('startModal').classList.add('hidden');
-            initGame();
-        }
-
-        function createRoomCode() {
-            if(!navigator.onLine) return alert("أنت غير متصل بالإنترنت!");
-            const nameInput = document.getElementById('playerName').value.trim();
-            if(!nameInput) return alert("اكتب اسمك أولاً!");
-            playerName = nameInput;
-
-            roomId = Math.floor(1000 + Math.random() * 9000).toString();
-            isOnline = true;
+        // إنشاء سيرفر أونلاين مباشر
+        function createOnlineRoom() {
+            document.getElementById('status').innerText = "جاري إنشاء الغرفة والأونلاين...";
+            // توليد كود عشوائي من 4 أرقام
+            const randomCode = "ABDO-" + Math.floor(1000 + Math.random() * 9000);
             
-            const items = DATABASE[currentCategory].items;
-            secretItem = items[Math.floor(Math.random() * items.length)];
+            peer = new Peer(randomCode);
 
-            window.set(window.ref(window.db, 'rooms/' + roomId), {
-                category: currentCategory,
-                secret: secretItem,
-                host: playerName
-            }).then(() => {
-                document.getElementById('startModal').classList.add('hidden');
-                document.getElementById('status').innerText = `تم إنشاء الغرفة! الكود: ${roomId} (شارك الكود مع صاحبك)`;
-                initGameSession();
+            peer.on('open', (id) => {
+                document.getElementById('myCodeDisplay').value = id;
+                document.getElementById('status').innerText = "أعطِ هذا الكود لصاحبك ليدخل معك!";
+            });
+
+            peer.on('connection', (c) => {
+                conn = c;
+                setupConnection();
             });
         }
 
-        function joinRoomCode() {
-            if(!navigator.onLine) return alert("أنت غير متصل بالإنترنت!");
-            const nameInput = document.getElementById('playerName').value.trim();
-            const codeInput = document.getElementById('roomCodeInput').value.trim();
-            if(!nameInput || !codeInput) return alert("اكتب اسمك وكود الغرفة!");
-            playerName = nameInput;
-            roomId = codeInput;
-            isOnline = true;
+        // الانضمام لغرفة أونلاين
+        function joinOnlineRoom() {
+            const code = document.getElementById('joinCodeInput').value.trim();
+            if(!code) return alert("اكتب كود الغرفة!");
 
-            window.onValue(window.ref(window.db, 'rooms/' + roomId), (snapshot) => {
-                const data = snapshot.val();
-                if(data) {
-                    currentCategory = data.category;
-                    secretItem = data.secret;
-                    document.getElementById('startModal').classList.add('hidden');
-                    document.getElementById('status').innerText = `انضممت للغرفة بنجاح مع ${data.host}! ابدأ التخمين.`;
-                    initGameSession();
-                } else {
-                    alert("كود الغرفة غير موجود!");
+            document.getElementById('status').innerText = "جاري الاتصال بصاحبك...";
+            peer = new Peer();
+
+            peer.on('open', () => {
+                conn = peer.connect(code);
+                setupConnection();
+            });
+        }
+
+        function setupConnection() {
+            conn.on('open', () => {
+                document.getElementById('setup-box').classList.add('hidden');
+                document.getElementById('game-ui').classList.remove('hidden');
+                document.getElementById('status').innerText = "تم الاتصال أونلاين! اضغط على الكارت اللي هتختاره سرّاً لصاحبك.";
+                renderBoard();
+            });
+
+            conn.on('data', (data) => {
+                if (data.type === 'chat') {
+                    addMessage("صاحبك", data.text);
+                } else if (data.type === 'guess') {
+                    if (data.name === mySecretPlayer) {
+                        alert("🎉 صاحبك خمن صح وفاز عليك! اختياره كان صح.");
+                        conn.send({ type: 'chat', text: '🎉 مبروك! إجابتك صح وتوقعت صح!' });
+                    } else {
+                        addMessage("النظام", `صاحبك خمن (${data.name}) وكانت إجابة خاطئة ❌`);
+                    }
                 }
-            }, { onlyOnce: true });
-        }
-
-        function initGame() {
-            const items = DATABASE[currentCategory].items;
-            secretItem = items[Math.floor(Math.random() * items.length)];
-            gameOver = false;
-            document.getElementById('status').innerText = `${playerName}، تم اختيار عنصر سرّي! ابدأ بالسؤال أو التخمين.`;
-            renderBoard();
-        }
-
-        function initGameSession() {
-            gameOver = false;
-            renderBoard();
+            });
         }
 
         function renderBoard() {
-            const items = DATABASE[currentCategory].items;
             const grid = document.getElementById('grid');
             grid.innerHTML = "";
+            const items = DATABASE[currentCategory];
 
             items.forEach((item, index) => {
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.id = `card-${index}`;
-                card.onclick = () => makeGuess(index);
-                card.innerHTML = `
-                    <div class="icon">${item.icon}</div>
-                    <span>${item.name}</span>
-                `;
+                card.innerHTML = `<div class="icon">${item.icon}</div><span>${item.name}</span>`;
+                
+                // الضغط للاستبعاد أو الاختيار
+                card.onclick = () => handleCardClick(index, item.name);
                 grid.appendChild(card);
             });
-
-            const qList = document.getElementById('questions');
-            qList.innerHTML = "";
-            DATABASE[currentCategory].questions.forEach((q) => {
-                const btn = document.createElement('button');
-                btn.className = 'q-btn';
-                btn.innerText = q.label;
-                btn.onclick = (e) => askAttr(q.key, q.label, e.target);
-                qList.appendChild(btn);
-            });
         }
 
-        function askAttr(key, labelText, btn) {
-            if(gameOver) return;
-            playSound('click');
-            btn.disabled = true;
-
-            const res = secretItem.attr[key];
-            if(res) {
-                document.getElementById('status').innerText = `💡 الإجابة: نعم! (${labelText}) ✅`;
-            } else {
-                document.getElementById('status').innerText = `❌ الإجابة: لا! (${labelText})`;
-            }
-
-            // استبعاد غير المتطابقين وتغيير لونهم للأحمر
-            const items = DATABASE[currentCategory].items;
-            items.forEach((item, index) => {
-                if(item.attr[key] !== res) {
-                    document.getElementById(`card-${index}`).classList.add('eliminated');
-                }
-            });
-        }
-
-        function makeGuess(index) {
-            if(gameOver) return;
-            playSound('click');
-
-            const selected = DATABASE[currentCategory].items[index];
+        function handleCardClick(index, name) {
             const card = document.getElementById(`card-${index}`);
-
-            if(selected.name === secretItem.name) {
-                playSound('correct');
-                card.classList.add('correct');
-                document.getElementById('status').innerText = `🎉 كفو يا ${playerName}! إجابة صحيحة، العنصر هو (${secretItem.name})!`;
-                gameOver = true;
+            
+            // لو لسه المختارش شخصيته السرية
+            if (!mySecretPlayer) {
+                mySecretPlayer = name;
+                card.classList.add('my-choice');
+                document.getElementById('status').innerText = `اختيارك السرّي هو (${name}). الآن اسأل صاحبك أو استبعد كروت بالضغط عليها!`;
             } else {
-                playSound('wrong');
-                card.classList.add('eliminated');
-                document.getElementById('status').innerText = `❌ خطأ! ليس (${selected.name}). حاول مجدداً.`;
+                // الضغط للاستبعاد والشطب
+                if (confirm(`هل تريد استبعاد/شطب (${name}) من الشبكة؟`)) {
+                    card.classList.add('eliminated');
+                } else if (confirm(`هل تريد تخمين أن صاحبك اختار (${name})؟`)) {
+                    conn.send({ type: 'guess', name: name });
+                    addMessage("أنت", `خمنت أن كارت صاحبك هو: ${name}`);
+                }
             }
+        }
+
+        function sendQuestion() {
+            const q = document.getElementById('questionInput').value.trim();
+            if(!q || !conn) return;
+            addMessage("أنت", q);
+            conn.send({ type: 'chat', text: q });
+            document.getElementById('questionInput').value = "";
+        }
+
+        function sendAnswer(ans) {
+            if(!conn) return;
+            addMessage("إجابتك", ans);
+            conn.send({ type: 'chat', text: "الإجابة: " + ans });
+        }
+
+        function addMessage(sender, text) {
+            const msgDiv = document.getElementById('messages');
+            msgDiv.innerHTML += `<div class="msg"><b>${sender}:</b> ${text}</div>`;
+            msgDiv.scrollTop = msgDiv.scrollHeight;
+        }
+
+        function setCategory(cat) {
+            currentCategory = cat;
+            mySecretPlayer = null;
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            renderBoard();
         }
     </script>
 </body>
 </html>
-
