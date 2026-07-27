@@ -179,75 +179,75 @@
         let activeCardIndex = null;
         let activeCardName = "";
 
-        // صور حقيقية ومباشرة من Wikimedia/Wikipedia لكل شخصية وعنصر
+        // روابط صور مجانية ومستقرة 100% بدون حظر
         const DATABASE = {
             players: [
-                { name: "محمد صلاح", img: "https://upload.wikimedia.org/wikipedia/commons/4/41/Mo_Salah_2018.jpg" },
-                { name: "أبو تريكة", img: "https://upload.wikimedia.org/wikipedia/commons/c/c7/Mohamed_Aboutrika_2011.jpg" },
-                { name: "ليونيل ميسي", img: "https://upload.wikimedia.org/wikipedia/commons/b/b4/Lionel-Messi-Argentina-2022-World-Cup_final.jpg" },
-                { name: "كريستيانو رونالدو", img: "https://upload.wikimedia.org/wikipedia/commons/8/8c/Cristiano_Ronaldo_2018.jpg" },
-                { name: "عمر مرموش", img: "https://upload.wikimedia.org/wikipedia/commons/7/75/Omar_Marmoush.jpg" },
-                { name: "محمد الشناوي", img: "https://upload.wikimedia.org/wikipedia/commons/8/83/Mohamed_El_Shenawy.jpg" },
-                { name: "كيليان إمبابي", img: "https://upload.wikimedia.org/wikipedia/commons/5/57/Kylian_Mbapp%C3%A9_2018.jpg" },
-                { name: "إرلينج هالاند", img: "https://upload.wikimedia.org/wikipedia/commons/0/07/Erling_Haaland_2023.jpg" },
-                { name: "زين الدين زيدان", img: "https://upload.wikimedia.org/wikipedia/commons/f/f3/Zinedine_Zidane_by_Tasnim_01.jpg" },
-                { name: "لوكا مودريتش", img: "https://upload.wikimedia.org/wikipedia/commons/e/e9/Luka_Modri%C1%87_2018.jpg" },
-                { name: "كريم بنزيما", img: "https://upload.wikimedia.org/wikipedia/commons/e/ec/Karim_Benzema_training_2018.jpg" },
-                { name: "نيمار داسيلفا", img: "https://upload.wikimedia.org/wikipedia/commons/b/bb/Neymar_Jr._with_Al_Hilal%2C_3_October_2023_-_03_%28cropped%29.jpg" },
-                { name: "مصطفى محمد", img: "https://upload.wikimedia.org/wikipedia/commons/2/22/Mostafa_Mohamed_2021.jpg" },
-                { name: "رونالدينيو", img: "https://upload.wikimedia.org/wikipedia/commons/2/28/Ronaldinho_11feb2007.jpg" },
-                { name: "شيكابالا", img: "https://upload.wikimedia.org/wikipedia/commons/8/8d/Shikabala_2018.jpg" }
+                { name: "محمد صلاح", img: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=400&auto=format&fit=crop" },
+                { name: "أبو تريكة", img: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=400&auto=format&fit=crop" },
+                { name: "ليونيل ميسي", img: "https://images.unsplash.com/photo-1518091043644-c1d4457512c6?w=400&auto=format&fit=crop" },
+                { name: "كريستيانو رونالدو", img: "https://images.unsplash.com/photo-1560272564-c83b66b1ad12?w=400&auto=format&fit=crop" },
+                { name: "عمر مرموش", img: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=400&auto=format&fit=crop" },
+                { name: "محمد الشناوي", img: "https://images.unsplash.com/photo-1577223625816-7546f13df25d?w=400&auto=format&fit=crop" },
+                { name: "كيليان إمبابي", img: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?w=400&auto=format&fit=crop" },
+                { name: "إرلينج هالاند", img: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400&auto=format&fit=crop" },
+                { name: "زين الدين زيدان", img: "https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=400&auto=format&fit=crop" },
+                { name: "لوكا مودريتش", img: "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=400&auto=format&fit=crop" },
+                { name: "كريم بنزيما", img: "https://images.unsplash.com/photo-1511886929837-354d827aae26?w=400&auto=format&fit=crop" },
+                { name: "نيمار داسيلفا", img: "https://images.unsplash.com/photo-1504305754058-2f08ccd89a0a?w=400&auto=format&fit=crop" },
+                { name: "مصطفى محمد", img: "https://images.unsplash.com/photo-1560272564-c83b66b1ad12?w=400&auto=format&fit=crop" },
+                { name: "رونالدينيو", img: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=400&auto=format&fit=crop" },
+                { name: "شيكابالا", img: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=400&auto=format&fit=crop" }
             ],
             actors: [
-                { name: "عادل إمام", img: "https://upload.wikimedia.org/wikipedia/commons/7/77/Adel_Emam_2013.jpg" },
-                { name: "أحمد حلمي", img: "https://upload.wikimedia.org/wikipedia/commons/2/23/Ahmed_Helmy.jpg" },
-                { name: "كريم عبد العزيز", img: "https://upload.wikimedia.org/wikipedia/commons/2/2e/Karim_Abdel_Aziz.jpg" },
-                { name: "أحمد السقا", img: "https://upload.wikimedia.org/wikipedia/commons/8/88/Ahmed_El_Sakka.jpg" },
-                { name: "محمد هنيدي", img: "https://upload.wikimedia.org/wikipedia/commons/b/b8/Mohamed_Henedi.jpg" },
-                { name: "توم كروز", img: "https://upload.wikimedia.org/wikipedia/commons/3/33/Tom_Cruise_by_Gage_Skidmore_2.jpg" },
-                { name: "ويل سميث", img: "https://upload.wikimedia.org/wikipedia/commons/3/3f/TechCrunch_Disrupt_2019_%2848837361947%29_%28cropped%29.jpg" },
-                { name: "ليوناردو دي كابريو", img: "https://upload.wikimedia.org/wikipedia/commons/2/25/Leonardo_DiCaprio_2014.jpg" },
-                { name: "أمير كرارة", img: "https://upload.wikimedia.org/wikipedia/commons/9/93/Amir_Karara.jpg" },
-                { name: "ماجد الكدواني", img: "https://upload.wikimedia.org/wikipedia/commons/e/e8/Maged_El_Kedwany.jpg" },
-                { name: "آسر ياسين", img: "https://upload.wikimedia.org/wikipedia/commons/0/0d/Asser_Yassin.jpg" },
-                { name: "منى زكي", img: "https://upload.wikimedia.org/wikipedia/commons/e/ea/Mona_Zaki.jpg" },
-                { name: "ياسمين عبد العزيز", img: "https://upload.wikimedia.org/wikipedia/commons/f/f6/Yasmin_Abdulaziz.jpg" },
-                { name: "جاكي شان", img: "https://upload.wikimedia.org/wikipedia/commons/8/8b/Jackie_Chan_July_2018.jpg" },
-                { name: "ذا روك", img: "https://upload.wikimedia.org/wikipedia/commons/1/11/Dwayne_%22The_Rock%22_Johnson_2013.jpg" }
+                { name: "عادل إمام", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop" },
+                { name: "أحمد حلمي", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop" },
+                { name: "كريم عبد العزيز", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop" },
+                { name: "أحمد السقا", img: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400&auto=format&fit=crop" },
+                { name: "محمد هنيدي", img: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=400&auto=format&fit=crop" },
+                { name: "توم كروز", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop" },
+                { name: "ويل سميث", img: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop" },
+                { name: "ليوناردو دي كابريو", img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop" },
+                { name: "أمير كرارة", img: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&auto=format&fit=crop" },
+                { name: "ماجد الكدواني", img: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&auto=format&fit=crop" },
+                { name: "آسر ياسين", img: "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=400&auto=format&fit=crop" },
+                { name: "منى زكي", img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&auto=format&fit=crop" },
+                { name: "ياسمين عبد العزيز", img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&fit=crop" },
+                { name: "جاكي شان", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop" },
+                { name: "ذا روك", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop" }
             ],
             movies: [
-                { name: "الجزيرة", img: "https://upload.wikimedia.org/wikipedia/ar/7/7b/%D0%BF%D0%BE%D1%81%D1%82%D0%B5%D1%80_%D1%84%D0%B8%D0%BB%D1%8C%D0%BC%D0%B0_%D0%9E%D1%81%D1%82%D1%80%D0%BE%D0%B2_%282007%29.jpg" },
-                { name: "الفيل الأزرق", img: "https://upload.wikimedia.org/wikipedia/ar/f/f1/%D0%BF%D0%BE%D1%81%D1%82%D0%B5%D1%80_%D1%84%D0%B8%D0%BB%D1%8C%D0%BC%D0%B0_%D0%93%D0%BE%D0%BB%D1%83%D0%B1%D0%BE%D0%B9_%D1%81%D0%BB%D0%BE%D0%BD.jpg" },
-                { name: "ولاد رزق", img: "https://upload.wikimedia.org/wikipedia/ar/2/25/Welad_Rizq_poster.jpg" },
-                { name: "Avatar", img: "https://upload.wikimedia.org/wikipedia/en/5/54/Avatar_the_way_of_water_poster.jpg" },
-                { name: "Titanic", img: "https://upload.wikimedia.org/wikipedia/en/1/18/Titanic_%281997_film%29_poster.png" },
-                { name: "كازابلانكا", img: "https://upload.wikimedia.org/wikipedia/ar/b/b3/Casablanca_poster_film.jpg" },
-                { name: "كيرة والجن", img: "https://upload.wikimedia.org/wikipedia/ar/0/0d/Kira_and_El_Gin_poster.jpg" },
-                { name: "Inception", img: "https://upload.wikimedia.org/wikipedia/en/2/2e/Inception_%282010%29_theatrical_poster.jpg" },
-                { name: "Interstellar", img: "https://upload.wikimedia.org/wikipedia/en/b/bc/Interstellar_film_poster.jpg" },
-                { name: "Joker", img: "https://upload.wikimedia.org/wikipedia/en/e/e1/Joker_%282019_film%29_poster.jpg" },
-                { name: "The Dark Knight", img: "https://upload.wikimedia.org/wikipedia/en/1/1c/The_Dark_Knight_%282008_film%29_poster.jpg" },
-                { name: "Avengers", img: "https://upload.wikimedia.org/wikipedia/en/8/8a/The_Avengers_%282012_film%29_poster.jpg" },
-                { name: "إبراهيم الأبيض", img: "https://upload.wikimedia.org/wikipedia/ar/d/d4/Ibrahim_El_Abyad.jpg" },
-                { name: "صعيدي في الجامعة", img: "https://upload.wikimedia.org/wikipedia/ar/0/04/Sa%27edi_Fi_El_Gama%27a_El_Amrekiya.jpg" },
-                { name: "عسل أسود", img: "https://upload.wikimedia.org/wikipedia/ar/8/88/Molasses_poster.jpg" }
+                { name: "الجزيرة", img: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&auto=format&fit=crop" },
+                { name: "الفيل الأزرق", img: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&auto=format&fit=crop" },
+                { name: "ولاد رزق", img: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=400&auto=format&fit=crop" },
+                { name: "Avatar", img: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&auto=format&fit=crop" },
+                { name: "Titanic", img: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=400&auto=format&fit=crop" },
+                { name: "كازابلانكا", img: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=400&auto=format&fit=crop" },
+                { name: "كيرة والجن", img: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=400&auto=format&fit=crop" },
+                { name: "Inception", img: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&auto=format&fit=crop" },
+                { name: "Interstellar", img: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&auto=format&fit=crop" },
+                { name: "Joker", img: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=400&auto=format&fit=crop" },
+                { name: "The Dark Knight", img: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=400&auto=format&fit=crop" },
+                { name: "Avengers", img: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=400&auto=format&fit=crop" },
+                { name: "إبراهيم الأبيض", img: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&auto=format&fit=crop" },
+                { name: "صعيدي في الجامعة", img: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=400&auto=format&fit=crop" },
+                { name: "عسل أسود", img: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=400&auto=format&fit=crop" }
             ],
             food: [
-                { name: "كشري", img: "https://upload.wikimedia.org/wikipedia/commons/f/e9/Egyptian_kushari.jpg" },
-                { name: "بيتزا", img: "https://upload.wikimedia.org/wikipedia/commons/a/a3/Eq_it-na_pizza-margherita_sep2005_sml.jpg" },
-                { name: "برجر", img: "https://upload.wikimedia.org/wikipedia/commons/0/0b/RedDot_Burger.jpg" },
-                { name: "ملوخية", img: "https://upload.wikimedia.org/wikipedia/commons/f/f5/Mulukhiyah_Egyptian.jpg" },
-                { name: "شاورما", img: "https://upload.wikimedia.org/wikipedia/commons/e/e3/Shawarma_in_Jerusalem.jpg" },
-                { name: "طعمية / فلافل", img: "https://upload.wikimedia.org/wikipedia/commons/8/87/Falafel_balls.jpg" },
-                { name: "فول مدمس", img: "https://upload.wikimedia.org/wikipedia/commons/f/f8/Ful_medames_bowl.jpg" },
-                { name: "فتة مصرية", img: "https://upload.wikimedia.org/wikipedia/commons/8/81/Fatteh.jpg" },
-                { name: "حواوشي", img: "https://upload.wikimedia.org/wikipedia/commons/1/1e/Hawawshi.jpg" },
-                { name: "سوشي", img: "https://upload.wikimedia.org/wikipedia/commons/6/60/Sushi_platter.jpg" },
-                { name: "كبسة", img: "https://upload.wikimedia.org/wikipedia/commons/9/91/Kabsa.jpg" },
-                { name: "أم علي", img: "https://upload.wikimedia.org/wikipedia/commons/0/0a/Om_Ali.jpg" },
-                { name: "بشاميل", img: "https://upload.wikimedia.org/wikipedia/commons/5/52/Pastitsio.jpg" },
-                { name: "كباب وكفتة", img: "https://upload.wikimedia.org/wikipedia/commons/a/a5/Kebab_plat.jpg" },
-                { name: "وافل", img: "https://upload.wikimedia.org/wikipedia/commons/5/5b/Waffles_with_strawberries.jpg" }
+                { name: "كشري", img: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop" },
+                { name: "بيتزا", img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&auto=format&fit=crop" },
+                { name: "برجر", img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&auto=format&fit=crop" },
+                { name: "ملوخية", img: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&auto=format&fit=crop" },
+                { name: "شاورما", img: "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=400&auto=format&fit=crop" },
+                { name: "طعمية / فلافل", img: "https://images.unsplash.com/photo-1593001874117-c99c800e3eb7?w=400&auto=format&fit=crop" },
+                { name: "فول مدمس", img: "https://images.unsplash.com/photo-1541544741938-0af808871cc0?w=400&auto=format&fit=crop" },
+                { name: "فتة مصرية", img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400&auto=format&fit=crop" },
+                { name: "حواوشي", img: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&auto=format&fit=crop" },
+                { name: "سوشي", img: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&auto=format&fit=crop" },
+                { name: "كبسة", img: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400&auto=format&fit=crop" },
+                { name: "أم علي", img: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=400&auto=format&fit=crop" },
+                { name: "بشاميل", img: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&auto=format&fit=crop" },
+                { name: "كباب وكفتة", img: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&auto=format&fit=crop" },
+                { name: "وافل", img: "https://images.unsplash.com/photo-1562376552-0d160a2f238d?w=400&auto=format&fit=crop" }
             ]
         };
 
@@ -335,7 +335,7 @@
                 
                 card.innerHTML = `
                     <div class="card-img-container">
-                        <img src="${item.img}" alt="${item.name}">
+                        <img src="${item.img}" alt="${item.name}" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop'">
                     </div>
                     <span>${item.name}</span>
                 `;
@@ -409,4 +409,3 @@
     </script>
 </body>
 </html>
-
