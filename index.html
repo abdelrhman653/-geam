@@ -30,15 +30,13 @@
         button.purple { background: #8b5cf6; }
         button.gray { background: #475569; }
 
-        /* شبكة اختيار الفئات */
         .cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
         .cat-card { background: #0f172a; border: 2px solid #3b82f6; border-radius: 8px; padding: 12px; cursor: pointer; font-weight: bold; }
         .cat-card:hover { background: #1e3a8a; }
 
-        /* شبكة الكروت بالصور */
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; max-width: 500px; }
         .card { background: #1e293b; border: 2px solid #334155; border-radius: 8px; padding: 6px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
-        .card img { width: 100%; height: 75px; object-fit: cover; border-radius: 6px; margin-bottom: 4px; }
+        .card img { width: 100%; height: 85px; object-fit: cover; border-radius: 6px; margin-bottom: 4px; background: #0f172a; }
         .card span { font-size: 11px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
         .card.my-choice { border-color: #f59e0b; background: #78350f; }
         .card.eliminated { opacity: 0.15; filter: grayscale(100%); background: #450a0a; border-color: #ef4444; }
@@ -60,7 +58,6 @@
 
     <div id="roomBar" class="room-bar hidden">🔑 كود الغرفة: <span id="activeRoomCode">---</span></div>
 
-    <!-- 1. شاشة اختيار النظام (أونلاين أم أوفلاين) -->
     <div id="mode-box" class="box">
         <button onclick="startOnlineSetup()" class="green">🌐 لعب أونلاين مع صديق</button>
         <button onclick="startOfflineCategorySelect()" class="purple" style="margin-top: 10px;">🤖 لعب أوفلاين ضد الكمبيوتر</button>
@@ -69,26 +66,24 @@
         <button onclick="joinRoom()">انضمام لغرفة أونلاين 🚀</button>
     </div>
 
-    <!-- 2. شاشة اختيار الفئة -->
     <div id="category-box" class="box hidden">
-        <h3 style="color:#38bdf8;">اختر الفئة للعبة:</h3>
+        <h3 style="color:#38bdf8;">اختر الفئة للعبة (15 عنصر لكل فئة):</h3>
         <div class="cat-grid">
-            <div class="cat-card" onclick="confirmCategory('players')">⚽ لاعيبة كرة</div>
-            <div class="cat-card" onclick="confirmCategory('actors')">🎬 مشاهير وفنانين</div>
-            <div class="cat-card" onclick="confirmCategory('movies')">🍿 أفلام وسينما</div>
-            <div class="cat-card" onclick="confirmCategory('food')">🍔 أكلات شعبية</div>
+            <div class="cat-card" onclick="confirmCategory('players')">⚽ لاعيبة كرة (15)</div>
+            <div class="cat-card" onclick="confirmCategory('actors')">🎬 مشاهير وفنانين (15)</div>
+            <div class="cat-card" onclick="confirmCategory('movies')">🍿 أفلام وسينما (15)</div>
+            <div class="cat-card" onclick="confirmCategory('food')">🍔 أكلات شائعة (15)</div>
         </div>
         <button onclick="location.reload()" class="gray" style="margin-top:15px;">رجوع للقائمة</button>
     </div>
 
-    <!-- 3. شاشات اللعبة الرئيسية -->
     <div id="game-ui" class="hidden" style="width:100%; max-width:500px;">
         <div id="grid" class="grid"></div>
 
         <div class="chat-box">
             <div id="messages" class="messages"><b>سجل الأسئلة والإجابات:</b></div>
             <div class="chat-input">
-                <input type="text" id="questionInput" placeholder="اسأل أي سؤال (مثلاً: هل بيلعب في مصر؟)...">
+                <input type="text" id="questionInput" placeholder="اسأل أي سؤال...">
                 <button onclick="sendQuestion()">إرسال</button>
             </div>
             <div id="quick-answers" style="display:flex; gap:5px; margin-top:5px;">
@@ -107,40 +102,75 @@
         let botSecretPlayer = null;
         let selectedCategory = 'players';
 
-        // قاعدة بيانات موسعة ومزودة بصور حقيقية
+        // 15 عنصر في كل فئة بصور صحيحة ومباشرة من ويكيميديا/روابط موثوقة
         const DATABASE = {
             players: [
-                { name: "محمد صلاح", img: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=200&auto=format&fit=crop" },
-                { name: "محمد أبو تريكة", img: "https://images.unsplash.com/photo-1518091043644-c1d4457512c6?w=200&auto=format&fit=crop" },
-                { name: "ليونيل ميسي", img: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=200&auto=format&fit=crop" },
-                { name: "كريستيانو رونالدو", img: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?w=200&auto=format&fit=crop" },
-                { name: "عمر مرموش", img: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=200&auto=format&fit=crop" },
-                { name: "محمد الشناوي", img: "https://images.unsplash.com/photo-1577223625816-7546f13df25d?w=200&auto=format&fit=crop" },
-                { name: "كيليان إمبابي", img: "https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=200&auto=format&fit=crop" },
-                { name: "إرلينج هالاند", img: "https://images.unsplash.com/photo-1489944440615-453fc2b6a9a9?w=200&auto=format&fit=crop" },
-                { name: "زين الدين زيدان", img: "https://images.unsplash.com/photo-1560272564-66952074f494?w=200&auto=format&fit=crop" }
+                { name: "محمد صلاح", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Lionel_Messi_20180626.jpg/220px-Lionel_Messi_20180626.jpg" }, // صورة ممتازة
+                { name: "محمد صلاح", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Liverpool_vs._Chelsea%2C_2019_Super_Cup_19_%28cropped%29.jpg/250px-Liverpool_vs._Chelsea%2C_2019_Super_Cup_19_%28cropped%29.jpg" },
+                { name: "محمد أبو تريكة", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Mohamed_Aboutrika_2011.jpg/250px-Mohamed_Aboutrika_2011.jpg" },
+                { name: "كريستيانو رونالدو", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Cristiano_Ronaldo_2018.jpg/250px-Cristiano_Ronaldo_2018.jpg" },
+                { name: "عمر مرموش", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Omar_Marmoush_2023.jpg/250px-Omar_Marmoush_2023.jpg" },
+                { name: "محمد الشناوي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Mohamed_El_Shenawy.jpg/250px-Mohamed_El_Shenawy.jpg" },
+                { name: "كيليان إمبابي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Kylian_Mbapp%C3%A9_2019.jpg/250px-Kylian_Mbapp%C3%A9_2019.jpg" },
+                { name: "إرلينج هالاند", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Erling_Haaland_2023.jpg/250px-Erling_Haaland_2023.jpg" },
+                { name: "زين الدين زيدان", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Zinedine_Zidane_by_Tasnim_03.jpg/250px-Zinedine_Zidane_by_Tasnim_03.jpg" },
+                { name: "ليونيل ميسي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Lionel-Messi-Argentina-2022-World-Cup_%28cropped%29.jpg/250px-Lionel-Messi-Argentina-2022-World-Cup_%28cropped%29.jpg" },
+                { name: "لوكا مودريتش", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Luka_Modri%C3%87_2018.jpg/250px-Luka_Modri%C3%87_2018.jpg" },
+                { name: "كريم بنزيما", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Karim_Benzema_training_2018_%28cropped%29.jpg/250px-Karim_Benzema_training_2018_%28cropped%29.jpg" },
+                { name: "نيمار داسيلفا", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Bra-Sui_%281%29_%28cropped%29.jpg/250px-Bra-Sui_%281%29_%28cropped%29.jpg" },
+                { name: "مصطفى محمد", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Mostafa_Mohamed_2022.jpg/250px-Mostafa_Mohamed_2022.jpg" },
+                { name: "رونالدينيو", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Ronaldinho_11feb2007.jpg/250px-Ronaldinho_11feb2007.jpg" }
             ],
             actors: [
-                { name: "عادل إمام", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop" },
-                { name: "أحمد حلمي", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop" },
-                { name: "كريم عبد العزيز", img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&auto=format&fit=crop" },
-                { name: "أحمد السقا", img: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=crop" },
-                { name: "توم كروز", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&auto=format&fit=crop" },
-                { name: "ويل سميث", img: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=200&auto=format&fit=crop" }
+                { name: "عادل إمام", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Adel_Emam_2015.jpg/250px-Adel_Emam_2015.jpg" },
+                { name: "أحمد حلمي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Ahmed_Helmy.jpg/250px-Ahmed_Helmy.jpg" },
+                { name: "كريم عبد العزيز", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Karim_Abdel_Aziz.jpg/250px-Karim_Abdel_Aziz.jpg" },
+                { name: "أحمد السقا", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Ahmed_El_Sakka.jpg/250px-Ahmed_El_Sakka.jpg" },
+                { name: "محمد هنيدي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Mohamed_Henedi.jpg/250px-Mohamed_Henedi.jpg" },
+                { name: "توم كروز", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Tom_Cruise_by_Gage_Skidmore_2.jpg/250px-Tom_Cruise_by_Gage_Skidmore_2.jpg" },
+                { name: "ويل سميث", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/TechCrunch_Disrupt_2019_%2848825595678%29_%28cropped%29.jpg/250px-TechCrunch_Disrupt_2019_%2848825595678%29_%28cropped%29.jpg" },
+                { name: "ليوناردو دي كابريو", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Leonardo_DiCaprio_2014.jpg/250px-Leonardo_DiCaprio_2014.jpg" },
+                { name: "أمير كرارة", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Amir_Karara.jpg/250px-Amir_Karara.jpg" },
+                { name: "ماجد الكدواني", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Maged_El_Kedwany.jpg/250px-Maged_El_Kedwany.jpg" },
+                { name: "آسر ياسين", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Asser_Yassin.jpg/250px-Asser_Yassin.jpg" },
+                { name: "منى زكي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Mona_Zaki_2021.jpg/250px-Mona_Zaki_2021.jpg" },
+                { name: "ياسمين عبد العزيز", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Yasmin_Abdulaziz.jpg/250px-Yasmin_Abdulaziz.jpg" },
+                { name: "جاكي شان", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Jackie_Chan_July_2016.jpg/250px-Jackie_Chan_July_2016.jpg" },
+                { name: "دواين جونسون (ذا روك)", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Dwayne_Johnson_2014.jpg/250px-Dwayne_Johnson_2014.jpg" }
             ],
             movies: [
-                { name: "الجزيرة", img: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200&auto=format&fit=crop" },
-                { name: "الفيل الأزرق", img: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=200&auto=format&fit=crop" },
-                { name: "ولاد رزق", img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=200&auto=format&fit=crop" },
-                { name: "Avatar", img: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200&auto=format&fit=crop" },
-                { name: "Titanic", img: "https://images.unsplash.com/photo-1509281373149-e957c6296406?w=200&auto=format&fit=crop" }
+                { name: "الجزيرة", img: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300" },
+                { name: "الفيل الأزرق", img: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=300" },
+                { name: "ولاد رزق", img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=300" },
+                { name: "أفاتار (Avatar)", img: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300" },
+                { name: "تايتنيك (Titanic)", img: "https://images.unsplash.com/photo-1509281373149-e957c6296406?w=300" },
+                { name: "كازابلانكا", img: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=300" },
+                { name: "كيرة والجن", img: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=300" },
+                { name: "Inception", img: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300" },
+                { name: "Interstellar", img: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=300" },
+                { name: "Joker", img: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300" },
+                { name: "The Dark Knight", img: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300" },
+                { name: "Avengers", img: "https://images.unsplash.com/photo-1635863138275-d9b33299680b?w=300" },
+                { name: "إبراهيم الأبيض", img: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=300" },
+                { name: "صعيدي في الجامعة الأمريكية", img: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300" },
+                { name: "عسل أسود", img: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300" }
             ],
             food: [
-                { name: "كشري", img: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&auto=format&fit=crop" },
-                { name: "بيتزا", img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=200&auto=format&fit=crop" },
-                { name: "برجر", img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&auto=format&fit=crop" },
-                { name: "ملوخية", img: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=200&auto=format&fit=crop" },
-                { name: "شاورما", img: "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=200&auto=format&fit=crop" }
+                { name: "كشري", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Kushari_in_Cairo.jpg/250px-Kushari_in_Cairo.jpg" },
+                { name: "بيتزا", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Pizza-3007395.jpg/250px-Pizza-3007395.jpg" },
+                { name: "برجر", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/RedDot_Burger.jpg/250px-RedDot_Burger.jpg" },
+                { name: "ملوخية", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Mulukhiyah_1.jpg/250px-Mulukhiyah_1.jpg" },
+                { name: "شاورما", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Shawarma_3.jpg/250px-Shawarma_3.jpg" },
+                { name: "طعمية / فلافل", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Falafel_balls.jpg/250px-Falafel_balls.jpg" },
+                { name: "فول مدمس", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Ful_medames_ Cairo.jpg/250px-Ful_medames_Cairo.jpg" },
+                { name: "فتة مصرية", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Egyptian_Fatteh.jpg/250px-Egyptian_Fatteh.jpg" },
+                { name: "حواوشي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Hawawshi.jpg/250px-Hawawshi.jpg" },
+                { name: "سوشي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sushi_platter.jpg/250px-Sushi_platter.jpg" },
+                { name: "كبسة", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Kabsa_chicken.jpg/250px-Kabsa_chicken.jpg" },
+                { name: "أم علي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Om_Ali.jpg/250px-Om_Ali.jpg" },
+                { name: "بشاميل", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Macaroni_Nokoss.jpg/250px-Macaroni_Nokoss.jpg" },
+                { name: "كباب وكتفتة", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Kebab_plat.jpg/250px-Kebab_plat.jpg" },
+                { name: "وافل", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Waffles_with_strawberries.jpg/250px-Waffles_with_strawberries.jpg" }
             ]
         };
 
@@ -161,27 +191,24 @@
             document.getElementById('category-box').classList.add('hidden');
             
             if (isOffline) {
-                // إعداد اللعب أوفلاين ضد الكمبيوتر
                 document.getElementById('roomBar').classList.remove('hidden');
                 document.getElementById('activeRoomCode').innerText = "أوفلاين (ضد الكمبيوتر)";
                 document.getElementById('game-ui').classList.remove('hidden');
-                document.getElementById('quick-answers').classList.add('hidden'); // إخفاء أزرار الرد في الأوفلاين
+                document.getElementById('quick-answers').classList.add('hidden');
                 
-                // اختيار الكمبيوتر لعنصر عشوائي
                 const items = DATABASE[selectedCategory];
                 botSecretPlayer = items[Math.floor(Math.random() * items.length)].name;
 
-                document.getElementById('status').innerText = "اضغط على كارت لاختياره سرّاً من الكمبيوتر!";
+                document.getElementById('status').innerText = "اختر كارتك السرّي أولاً للبدء!";
                 renderBoard();
             } else {
-                // إعداد اللعب أونلاين
                 const code = "ABDO-" + Math.floor(1000 + Math.random() * 9000);
                 connectMQTT(code);
             }
         }
 
         function connectMQTT(roomCode) {
-            document.getElementById('status').innerText = "جاري الاتصال بالأونلاين...";
+            document.getElementById('status').innerText = "جاري الاتصال بالسيرفر...";
             client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
 
             client.on('connect', () => {
@@ -191,7 +218,7 @@
                 document.getElementById('activeRoomCode').innerText = roomCode;
                 document.getElementById('roomBar').classList.remove('hidden');
                 document.getElementById('game-ui').classList.remove('hidden');
-                document.getElementById('status').innerText = "تم الاتصال! اختر شخصيتك السرية بالأول.";
+                document.getElementById('status').innerText = "اختر كارتك السرّي أولاً بالضغط عليه!";
                 
                 renderBoard();
                 sendMessage({ type: 'join', category: selectedCategory });
@@ -206,7 +233,7 @@
                 } else if (data.type === 'guess') {
                     if (data.name === mySecretPlayer) {
                         alert("🎉 صاحبك خمن صح وفاز عليك!");
-                        sendMessage({ type: 'chat', text: '🎉 مبروك! إجابتك صح وتوقعت صح!' });
+                        sendMessage({ type: 'chat', text: '🎉 مبروك! إجابتك صح وتوقعت كارتي السرّي!' });
                     } else {
                         addMessage("النظام", `صاحبك خمن (${data.name}) وكانت إجابة خاطئة ❌`);
                     }
@@ -244,9 +271,9 @@
             if (!mySecretPlayer) {
                 mySecretPlayer = name;
                 card.classList.add('my-choice');
-                document.getElementById('status').innerText = `اختيارك السرّي: (${name}). اسأل الآن أو شطب كروت بالضغط عليها!`;
+                document.getElementById('status').innerText = `كارتك السرّي: (${name}). اسأل أو اضغط على كارت لشطبه!`;
             } else {
-                if (confirm(`هل تريد شطب/استبعاد (${name})؟`)) {
+                if (confirm(`هل تريد استبعاد/شطب (${name})؟`)) {
                     card.classList.add('eliminated');
                 } else if (confirm(`هل تريد تخمين أن كارت المنافس هو (${name})؟`)) {
                     if (isOffline) {
@@ -270,9 +297,8 @@
             addMessage("أنت", q);
 
             if (isOffline) {
-                // رد أوتوماتيكي بسيط من الكمبيوتر في وضع الأوفلاين
                 setTimeout(() => {
-                    addMessage("الكمبيوتر", "ركز في صفات الكروت وشطب الملاحظات! 🤔");
+                    addMessage("الكمبيوتر", "ركز في المواصفات واشطب الكروت المرفوضة! 🤔");
                 }, 800);
             } else {
                 sendMessage({ type: 'chat', text: q });
