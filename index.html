@@ -3,31 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>اقف في صفي - أونلاين أسرع وأقوى</title>
-    <!-- مكتبة الربط المباشر P2P الأونلاين -->
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <title>اقف في صفي - أونلاين سريع</title>
+    <!-- مكتبة MQTT للأونلاين -->
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
         body { background: #0f172a; color: #fff; display: flex; flex-direction: column; align-items: center; padding: 10px; min-height: 100vh; }
         
         h1 { color: #38bdf8; font-size: 22px; margin-bottom: 5px; text-align: center; }
-        .subtitle { color: #94a3b8; font-size: 12px; margin-bottom: 10px; }
+        .subtitle { color: #94a3b8; font-size: 13px; margin-bottom: 10px; text-align: center; }
 
-        /* شاشة الدخول والأونلاين */
         .online-box {
             background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 12px;
             width: 100%; max-width: 500px; text-align: center; margin-bottom: 10px;
         }
-        input { width: 100%; padding: 10px; margin: 5px 0; background: #0f172a; border: 1px solid #475569; color: #fff; border-radius: 6px; text-align: center; }
-        button { width: 100%; padding: 10px; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        input { width: 100%; padding: 10px; margin: 5px 0; background: #0f172a; border: 1px solid #475569; color: #fff; border-radius: 6px; text-align: center; font-size: 15px; }
+        button { width: 100%; padding: 11px; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px; }
         button.green { background: #10b981; }
 
-        /* الفئات */
         .categories { display: flex; gap: 5px; overflow-x: auto; width: 100%; max-width: 500px; margin-bottom: 10px; padding-bottom: 5px; }
         .cat-btn { background: #334155; color: #38bdf8; border: none; padding: 6px 12px; border-radius: 15px; font-size: 12px; white-space: nowrap; }
         .cat-btn.active { background: #38bdf8; color: #0f172a; font-weight: bold; }
 
-        /* شبكة الكروت */
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; max-width: 500px; }
         .card { background: #1e293b; border: 2px solid #334155; border-radius: 8px; padding: 8px 2px; text-align: center; cursor: pointer; }
         .card .icon { font-size: 24px; }
@@ -35,10 +32,9 @@
         .card.my-choice { border-color: #f59e0b; background: #78350f; }
         .card.eliminated { opacity: 0.2; filter: grayscale(100%); background: #450a0a; border-color: #ef4444; }
 
-        /* شات الأسئلة للأونلاين */
         .chat-box { background: #1e293b; width: 100%; max-width: 500px; border-radius: 8px; padding: 10px; margin-top: 10px; border: 1px solid #334155; }
-        .messages { max-height: 100px; overflow-y: auto; font-size: 12px; margin-bottom: 8px; text-align: right; }
-        .msg { padding: 4px; border-bottom: 1px solid #334155; }
+        .messages { max-height: 120px; overflow-y: auto; font-size: 12px; margin-bottom: 8px; text-align: right; background: #0f172a; padding: 8px; border-radius: 6px; }
+        .msg { padding: 4px; border-bottom: 1px solid #1e293b; }
         .chat-input { display: flex; gap: 5px; }
         .chat-input input { margin: 0; }
         .chat-input button { width: auto; padding: 0 15px; }
@@ -49,18 +45,16 @@
 <body>
 
     <h1>🎮 اقف في صفي (أونلاين)</h1>
-    <div class="subtitle" id="status">اكتب اسمك وأنشئ غرفة أو انضم لصاحبك!</div>
+    <div class="subtitle" id="status">أنشئ غرفة أو أدخل كود صاحبك فوراً!</div>
 
-    <!-- التحكم في الأونلاين -->
     <div id="setup-box" class="online-box">
-        <input type="text" id="myCodeDisplay" readonly placeholder="كود الغرفة الخاص بك سيظهر هنا..." style="color:#38bdf8; font-weight:bold;">
-        <button onclick="createOnlineRoom()" class="green">🌐 إنشاء كود غرفة أونلاين</button>
+        <input type="text" id="myCodeDisplay" readonly placeholder="كود الغرفة الخاص بك..." style="color:#38bdf8; font-weight:bold;">
+        <button onclick="createRoom()" class="green">🌐 إنشاء كود غرفة أونلاين</button>
         <hr style="border-color:#334155; margin:10px 0;">
         <input type="text" id="joinCodeInput" placeholder="أدخل كود غرفة صاحبك هنا...">
-        <button onclick="joinOnlineRoom()">انضمام لغرفة صاحبك 🚀</button>
+        <button onclick="joinRoom()">انضمام لغرفة صاحبك 🚀</button>
     </div>
 
-    <!-- الفئات -->
     <div id="game-ui" class="hidden" style="width:100%; max-width:500px;">
         <div class="categories">
             <button class="cat-btn active" onclick="setCategory('players')">⚽ لاعيبة</button>
@@ -70,14 +64,12 @@
             <button class="cat-btn" onclick="setCategory('animals')">🦁 حيوانات</button>
         </div>
 
-        <!-- شبكة العناصر -->
         <div id="grid" class="grid"></div>
 
-        <!-- شات المحادثة والأسئلة المباشرة -->
         <div class="chat-box">
             <div id="messages" class="messages"><b>سجل الأسئلة والإجابات:</b></div>
             <div class="chat-input">
-                <input type="text" id="questionInput" placeholder="اسأل صاحبك أي سؤال (مثلاً: هل بيلعب برجله الشمال؟)...">
+                <input type="text" id="questionInput" placeholder="اسأل صاحبك أي سؤال...">
                 <button onclick="sendQuestion()">إرسال</button>
             </div>
             <div style="display:flex; gap:5px; margin-top:5px;">
@@ -88,8 +80,9 @@
     </div>
 
     <script>
-        let peer = null;
-        let conn = null;
+        let client = null;
+        let currentRoom = "";
+        let myClientId = "user_" + Math.random().toString(36).substring(7);
         let mySecretPlayer = null;
         let currentCategory = 'players';
 
@@ -118,59 +111,60 @@
             ]
         };
 
-        // إنشاء سيرفر أونلاين مباشر
-        function createOnlineRoom() {
-            document.getElementById('status').innerText = "جاري إنشاء الغرفة والأونلاين...";
-            // توليد كود عشوائي من 4 أرقام
-            const randomCode = "ABDO-" + Math.floor(1000 + Math.random() * 9000);
+        function connectMQTT(roomCode) {
+            document.getElementById('status').innerText = "جاري الاتصال بالسيرفر الأونلاين...";
             
-            peer = new Peer(randomCode);
+            client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
 
-            peer.on('open', (id) => {
-                document.getElementById('myCodeDisplay').value = id;
-                document.getElementById('status').innerText = "أعطِ هذا الكود لصاحبك ليدخل معك!";
-            });
+            client.on('connect', () => {
+                currentRoom = "abdo_game_room_" + roomCode;
+                client.subscribe(currentRoom);
 
-            peer.on('connection', (c) => {
-                conn = c;
-                setupConnection();
-            });
-        }
-
-        // الانضمام لغرفة أونلاين
-        function joinOnlineRoom() {
-            const code = document.getElementById('joinCodeInput').value.trim();
-            if(!code) return alert("اكتب كود الغرفة!");
-
-            document.getElementById('status').innerText = "جاري الاتصال بصاحبك...";
-            peer = new Peer();
-
-            peer.on('open', () => {
-                conn = peer.connect(code);
-                setupConnection();
-            });
-        }
-
-        function setupConnection() {
-            conn.on('open', () => {
                 document.getElementById('setup-box').classList.add('hidden');
                 document.getElementById('game-ui').classList.remove('hidden');
-                document.getElementById('status').innerText = "تم الاتصال أونلاين! اضغط على الكارت اللي هتختاره سرّاً لصاحبك.";
+                document.getElementById('status').innerText = "تم الاتصال بنجاح! اختر الشخصية السرية الخاصة بك.";
+                
                 renderBoard();
+
+                sendMessage({ type: 'join', sender: myClientId });
             });
 
-            conn.on('data', (data) => {
+            client.on('message', (topic, message) => {
+                const data = JSON.parse(message.toString());
+                if (data.sender === myClientId) return;
+
                 if (data.type === 'chat') {
                     addMessage("صاحبك", data.text);
                 } else if (data.type === 'guess') {
                     if (data.name === mySecretPlayer) {
-                        alert("🎉 صاحبك خمن صح وفاز عليك! اختياره كان صح.");
-                        conn.send({ type: 'chat', text: '🎉 مبروك! إجابتك صح وتوقعت صح!' });
+                        alert("🎉 صاحبك خمن صح وفاز عليك!");
+                        sendMessage({ type: 'chat', text: '🎉 مبروك! إجابتك صح وتوقعت صح!' });
                     } else {
                         addMessage("النظام", `صاحبك خمن (${data.name}) وكانت إجابة خاطئة ❌`);
                     }
+                } else if (data.type === 'join') {
+                    addMessage("النظام", "انضم صاحبك للغرفة الآن! ابدأوا اللعب 🚀");
                 }
             });
+        }
+
+        function createRoom() {
+            const code = "ABDO-" + Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('myCodeDisplay').value = code;
+            connectMQTT(code);
+        }
+
+        function joinRoom() {
+            const code = document.getElementById('joinCodeInput').value.trim();
+            if(!code) return alert("أدخل كود الغرفة أولاً!");
+            connectMQTT(code);
+        }
+
+        function sendMessage(obj) {
+            if (client && currentRoom) {
+                obj.sender = myClientId;
+                client.publish(currentRoom, JSON.stringify(obj));
+            }
         }
 
         function renderBoard() {
@@ -183,8 +177,6 @@
                 card.className = 'card';
                 card.id = `card-${index}`;
                 card.innerHTML = `<div class="icon">${item.icon}</div><span>${item.name}</span>`;
-                
-                // الضغط للاستبعاد أو الاختيار
                 card.onclick = () => handleCardClick(index, item.name);
                 grid.appendChild(card);
             });
@@ -192,18 +184,15 @@
 
         function handleCardClick(index, name) {
             const card = document.getElementById(`card-${index}`);
-            
-            // لو لسه المختارش شخصيته السرية
             if (!mySecretPlayer) {
                 mySecretPlayer = name;
                 card.classList.add('my-choice');
-                document.getElementById('status').innerText = `اختيارك السرّي هو (${name}). الآن اسأل صاحبك أو استبعد كروت بالضغط عليها!`;
+                document.getElementById('status').innerText = `اختيارك السرّي: (${name}). اسأل صاحبك أو شطب كروت بالضغط عليها!`;
             } else {
-                // الضغط للاستبعاد والشطب
-                if (confirm(`هل تريد استبعاد/شطب (${name}) من الشبكة؟`)) {
+                if (confirm(`هل تريد شطب (${name}) من شبكتك؟`)) {
                     card.classList.add('eliminated');
-                } else if (confirm(`هل تريد تخمين أن صاحبك اختار (${name})؟`)) {
-                    conn.send({ type: 'guess', name: name });
+                } else if (confirm(`هل تريد تخمين أن كارت صاحبك هو (${name})؟`)) {
+                    sendMessage({ type: 'guess', name: name });
                     addMessage("أنت", `خمنت أن كارت صاحبك هو: ${name}`);
                 }
             }
@@ -211,16 +200,15 @@
 
         function sendQuestion() {
             const q = document.getElementById('questionInput').value.trim();
-            if(!q || !conn) return;
+            if(!q) return;
             addMessage("أنت", q);
-            conn.send({ type: 'chat', text: q });
+            sendMessage({ type: 'chat', text: q });
             document.getElementById('questionInput').value = "";
         }
 
         function sendAnswer(ans) {
-            if(!conn) return;
             addMessage("إجابتك", ans);
-            conn.send({ type: 'chat', text: "الإجابة: " + ans });
+            sendMessage({ type: 'chat', text: "الإجابة: " + ans });
         }
 
         function addMessage(sender, text) {
