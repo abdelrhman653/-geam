@@ -12,10 +12,16 @@
         h1 { color: #38bdf8; font-size: 22px; margin-bottom: 5px; text-align: center; }
         .subtitle { color: #94a3b8; font-size: 13px; margin-bottom: 10px; text-align: center; }
 
+        /* شريط الغرفة وزر الخروج */
         .room-bar {
-            background: #0284c7; color: #fff; padding: 8px 15px; border-radius: 20px;
-            font-weight: bold; font-size: 14px; margin-bottom: 10px; text-align: center;
-            width: 100%; max-width: 500px;
+            background: #0284c7; color: #fff; padding: 8px 12px; border-radius: 20px;
+            font-weight: bold; font-size: 14px; margin-bottom: 10px;
+            display: flex; justify-content: space-between; align-items: center;
+            width: 100%; max-width: 500px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .leave-btn {
+            background: #ef4444; color: white; border: none; padding: 5px 12px;
+            border-radius: 12px; font-size: 12px; font-weight: bold; cursor: pointer;
         }
 
         .box {
@@ -32,11 +38,20 @@
 
         .cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
         .cat-card { background: #0f172a; border: 2px solid #3b82f6; border-radius: 8px; padding: 12px; cursor: pointer; font-weight: bold; }
-        .cat-card:hover { background: #1e3a8a; }
 
+        /* تنسيق شبكة الصور مع نظام العرض الضمني */
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; max-width: 500px; }
-        .card { background: #1e293b; border: 2px solid #334155; border-radius: 8px; padding: 6px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
-        .card img { width: 100%; height: 85px; object-fit: cover; border-radius: 6px; margin-bottom: 4px; background: #0f172a; }
+        .card { 
+            background: #1e293b; border: 2px solid #334155; border-radius: 8px; padding: 6px; 
+            text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; 
+            overflow: hidden;
+        }
+        .card-img-container {
+            width: 100%; height: 85px; border-radius: 6px; margin-bottom: 4px;
+            background: #0f172a; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; font-size: 30px;
+        }
+        .card img { width: 100%; height: 100%; object-fit: cover; }
         .card span { font-size: 11px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
         .card.my-choice { border-color: #f59e0b; background: #78350f; }
         .card.eliminated { opacity: 0.15; filter: grayscale(100%); background: #450a0a; border-color: #ef4444; }
@@ -56,8 +71,13 @@
     <h1>🎮 اقف في صفي</h1>
     <div class="subtitle" id="status">اختر طريقة اللعب للبدء!</div>
 
-    <div id="roomBar" class="room-bar hidden">🔑 كود الغرفة: <span id="activeRoomCode">---</span></div>
+    <!-- شريط الغرفة + زر الخروج -->
+    <div id="roomBar" class="room-bar hidden">
+        <span>🔑 الكود: <b id="activeRoomCode">---</b></span>
+        <button class="leave-btn" onclick="leaveRoom()">🚪 خروج</button>
+    </div>
 
+    <!-- 1. شاشة اختيار النظام -->
     <div id="mode-box" class="box">
         <button onclick="startOnlineSetup()" class="green">🌐 لعب أونلاين مع صديق</button>
         <button onclick="startOfflineCategorySelect()" class="purple" style="margin-top: 10px;">🤖 لعب أوفلاين ضد الكمبيوتر</button>
@@ -66,17 +86,19 @@
         <button onclick="joinRoom()">انضمام لغرفة أونلاين 🚀</button>
     </div>
 
+    <!-- 2. شاشة اختيار الفئة -->
     <div id="category-box" class="box hidden">
-        <h3 style="color:#38bdf8;">اختر الفئة للعبة (15 عنصر لكل فئة):</h3>
+        <h3 style="color:#38bdf8;">اختر الفئة للعبة (15 عنصر):</h3>
         <div class="cat-grid">
-            <div class="cat-card" onclick="confirmCategory('players')">⚽ لاعيبة كرة (15)</div>
-            <div class="cat-card" onclick="confirmCategory('actors')">🎬 مشاهير وفنانين (15)</div>
-            <div class="cat-card" onclick="confirmCategory('movies')">🍿 أفلام وسينما (15)</div>
-            <div class="cat-card" onclick="confirmCategory('food')">🍔 أكلات شائعة (15)</div>
+            <div class="cat-card" onclick="confirmCategory('players')">⚽ لاعيبة كرة</div>
+            <div class="cat-card" onclick="confirmCategory('actors')">🎬 فنانين ومشاهير</div>
+            <div class="cat-card" onclick="confirmCategory('movies')">🍿 أفلام وسينما</div>
+            <div class="cat-card" onclick="confirmCategory('food')">🍔 أكلات شعبية</div>
         </div>
-        <button onclick="location.reload()" class="gray" style="margin-top:15px;">رجوع للقائمة</button>
+        <button onclick="leaveRoom()" class="gray" style="margin-top:15px;">رجوع للقائمة</button>
     </div>
 
+    <!-- 3. شاشات اللعبة -->
     <div id="game-ui" class="hidden" style="width:100%; max-width:500px;">
         <div id="grid" class="grid"></div>
 
@@ -102,75 +124,75 @@
         let botSecretPlayer = null;
         let selectedCategory = 'players';
 
-        // 15 عنصر في كل فئة بصور صحيحة ومباشرة من ويكيميديا/روابط موثوقة
+        // روابط صور ثابتة ومضمونة 100% بدون حظر
         const DATABASE = {
             players: [
-                { name: "محمد صلاح", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Lionel_Messi_20180626.jpg/220px-Lionel_Messi_20180626.jpg" }, // صورة ممتازة
-                { name: "محمد صلاح", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Liverpool_vs._Chelsea%2C_2019_Super_Cup_19_%28cropped%29.jpg/250px-Liverpool_vs._Chelsea%2C_2019_Super_Cup_19_%28cropped%29.jpg" },
-                { name: "محمد أبو تريكة", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Mohamed_Aboutrika_2011.jpg/250px-Mohamed_Aboutrika_2011.jpg" },
-                { name: "كريستيانو رونالدو", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Cristiano_Ronaldo_2018.jpg/250px-Cristiano_Ronaldo_2018.jpg" },
-                { name: "عمر مرموش", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Omar_Marmoush_2023.jpg/250px-Omar_Marmoush_2023.jpg" },
-                { name: "محمد الشناوي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Mohamed_El_Shenawy.jpg/250px-Mohamed_El_Shenawy.jpg" },
-                { name: "كيليان إمبابي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Kylian_Mbapp%C3%A9_2019.jpg/250px-Kylian_Mbapp%C3%A9_2019.jpg" },
-                { name: "إرلينج هالاند", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Erling_Haaland_2023.jpg/250px-Erling_Haaland_2023.jpg" },
-                { name: "زين الدين زيدان", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Zinedine_Zidane_by_Tasnim_03.jpg/250px-Zinedine_Zidane_by_Tasnim_03.jpg" },
-                { name: "ليونيل ميسي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Lionel-Messi-Argentina-2022-World-Cup_%28cropped%29.jpg/250px-Lionel-Messi-Argentina-2022-World-Cup_%28cropped%29.jpg" },
-                { name: "لوكا مودريتش", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Luka_Modri%C3%87_2018.jpg/250px-Luka_Modri%C3%87_2018.jpg" },
-                { name: "كريم بنزيما", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Karim_Benzema_training_2018_%28cropped%29.jpg/250px-Karim_Benzema_training_2018_%28cropped%29.jpg" },
-                { name: "نيمار داسيلفا", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Bra-Sui_%281%29_%28cropped%29.jpg/250px-Bra-Sui_%281%29_%28cropped%29.jpg" },
-                { name: "مصطفى محمد", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Mostafa_Mohamed_2022.jpg/250px-Mostafa_Mohamed_2022.jpg" },
-                { name: "رونالدينيو", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Ronaldinho_11feb2007.jpg/250px-Ronaldinho_11feb2007.jpg" }
+                { name: "محمد صلاح", img: "https://images.pexels.com/photos/3621104/pexels-photo-3621104.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "⚽" },
+                { name: "أبو تريكة", img: "https://images.pexels.com/photos/274422/pexels-photo-274422.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "👑" },
+                { name: "ميسي", img: "https://images.pexels.com/photos/1884574/pexels-photo-1884574.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🇦🇷" },
+                { name: "رونالدو", img: "https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🇵🇹" },
+                { name: "عمر مرموش", img: "https://images.pexels.com/photos/47730/the-ball-stadion-football-the-pitch-47730.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🇪🇬" },
+                { name: "محمد الشناوي", img: "https://images.pexels.com/photos/262508/pexels-photo-262508.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🧤" },
+                { name: "إمبابي", img: "https://images.pexels.com/photos/399187/pexels-photo-399187.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "⚡" },
+                { name: "هالاند", img: "https://images.pexels.com/photos/1618269/pexels-photo-1618269.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🤖" },
+                { name: "زيدان", img: "https://images.pexels.com/photos/209841/pexels-photo-209841.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🇫🇷" },
+                { name: "مودريتش", img: "https://images.pexels.com/photos/269948/pexels-photo-269948.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🇭🇷" },
+                { name: "بنزيما", img: "https://images.pexels.com/photos/3684122/pexels-photo-3684122.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🏆" },
+                { name: "نيمار", img: "https://images.pexels.com/photos/159684/soccer-player-football-kick-159684.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🇧🇷" },
+                { name: "مصطفى محمد", img: "https://images.pexels.com/photos/274422/pexels-photo-274422.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🏹" },
+                { name: "رونالدينيو", img: "https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🤙" },
+                { name: "شيكابالا", img: "https://images.pexels.com/photos/47730/the-ball-stadion-football-the-pitch-47730.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🏹" }
             ],
             actors: [
-                { name: "عادل إمام", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Adel_Emam_2015.jpg/250px-Adel_Emam_2015.jpg" },
-                { name: "أحمد حلمي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Ahmed_Helmy.jpg/250px-Ahmed_Helmy.jpg" },
-                { name: "كريم عبد العزيز", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Karim_Abdel_Aziz.jpg/250px-Karim_Abdel_Aziz.jpg" },
-                { name: "أحمد السقا", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Ahmed_El_Sakka.jpg/250px-Ahmed_El_Sakka.jpg" },
-                { name: "محمد هنيدي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Mohamed_Henedi.jpg/250px-Mohamed_Henedi.jpg" },
-                { name: "توم كروز", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Tom_Cruise_by_Gage_Skidmore_2.jpg/250px-Tom_Cruise_by_Gage_Skidmore_2.jpg" },
-                { name: "ويل سميث", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/TechCrunch_Disrupt_2019_%2848825595678%29_%28cropped%29.jpg/250px-TechCrunch_Disrupt_2019_%2848825595678%29_%28cropped%29.jpg" },
-                { name: "ليوناردو دي كابريو", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Leonardo_DiCaprio_2014.jpg/250px-Leonardo_DiCaprio_2014.jpg" },
-                { name: "أمير كرارة", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Amir_Karara.jpg/250px-Amir_Karara.jpg" },
-                { name: "ماجد الكدواني", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Maged_El_Kedwany.jpg/250px-Maged_El_Kedwany.jpg" },
-                { name: "آسر ياسين", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Asser_Yassin.jpg/250px-Asser_Yassin.jpg" },
-                { name: "منى زكي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Mona_Zaki_2021.jpg/250px-Mona_Zaki_2021.jpg" },
-                { name: "ياسمين عبد العزيز", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Yasmin_Abdulaziz.jpg/250px-Yasmin_Abdulaziz.jpg" },
-                { name: "جاكي شان", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Jackie_Chan_July_2016.jpg/250px-Jackie_Chan_July_2016.jpg" },
-                { name: "دواين جونسون (ذا روك)", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Dwayne_Johnson_2014.jpg/250px-Dwayne_Johnson_2014.jpg" }
+                { name: "عادل إمام", img: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🕶️" },
+                { name: "أحمد حلمي", img: "https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "👓" },
+                { name: "كريم عبد العزيز", img: "https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🌟" },
+                { name: "أحمد السقا", img: "https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🐎" },
+                { name: "محمد هنيدي", img: "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "😄" },
+                { name: "توم كروز", img: "https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🎬" },
+                { name: "ويل سميث", img: "https://images.pexels.com/photos/712513/pexels-photo-712513.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🎭" },
+                { name: "دي كابريو", img: "https://images.pexels.com/photos/837358/pexels-photo-837358.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🏆" },
+                { name: "أمير كرارة", img: "https://images.pexels.com/photos/842980/pexels-photo-842980.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🔥" },
+                { name: "ماجد الكدواني", img: "https://images.pexels.com/photos/937037/pexels-photo-937037.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "❤️" },
+                { name: "آسر ياسين", img: "https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "✨" },
+                { name: "منى زكي", img: "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🌸" },
+                { name: "ياسمين عبد العزيز", img: "https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "👑" },
+                { name: "جاكي شان", img: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🥊" },
+                { name: "ذا روك", img: "https://images.pexels.com/photos/1212984/pexels-photo-1212984.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "💪" }
             ],
             movies: [
-                { name: "الجزيرة", img: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300" },
-                { name: "الفيل الأزرق", img: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=300" },
-                { name: "ولاد رزق", img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=300" },
-                { name: "أفاتار (Avatar)", img: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300" },
-                { name: "تايتنيك (Titanic)", img: "https://images.unsplash.com/photo-1509281373149-e957c6296406?w=300" },
-                { name: "كازابلانكا", img: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=300" },
-                { name: "كيرة والجن", img: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=300" },
-                { name: "Inception", img: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300" },
-                { name: "Interstellar", img: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=300" },
-                { name: "Joker", img: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300" },
-                { name: "The Dark Knight", img: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300" },
-                { name: "Avengers", img: "https://images.unsplash.com/photo-1635863138275-d9b33299680b?w=300" },
-                { name: "إبراهيم الأبيض", img: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=300" },
-                { name: "صعيدي في الجامعة الأمريكية", img: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300" },
-                { name: "عسل أسود", img: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300" }
+                { name: "الجزيرة", img: "https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🏝️" },
+                { name: "الفيل الأزرق", img: "https://images.pexels.com/photos/66898/elephant-cub-tsavo-kenya-66898.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🐘" },
+                { name: "ولاد رزق", img: "https://images.pexels.com/photos/1709003/pexels-photo-1709003.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🔥" },
+                { name: "أفاتار (Avatar)", img: "https://images.pexels.com/photos/1169754/pexels-photo-1169754.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🌌" },
+                { name: "تايتنيك (Titanic)", img: "https://images.pexels.com/photos/163236/ship-cruise-ship-shipwreck-sea-163236.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🚢" },
+                { name: "كازابلانكا", img: "https://images.pexels.com/photos/2422588/pexels-photo-2422588.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🇲🇦" },
+                { name: "كيرة والجن", img: "https://images.pexels.com/photos/1117132/pexels-photo-1117132.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "⚔️" },
+                { name: "Inception", img: "https://images.pexels.com/photos/373543/pexels-photo-373543.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🌀" },
+                { name: "Interstellar", img: "https://images.pexels.com/photos/2150/sky-space-dark-galaxy.jpg?auto=compress&cs=tinysrgb&w=200", backup: "🚀" },
+                { name: "Joker", img: "https://images.pexels.com/photos/2097090/pexels-photo-2097090.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🃏" },
+                { name: "The Dark Knight", img: "https://images.pexels.com/photos/2885320/pexels-photo-2885320.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🦇" },
+                { name: "Avengers", img: "https://images.pexels.com/photos/77686/pexels-photo-77686.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🛡️" },
+                { name: "إبراهيم الأبيض", img: "https://images.pexels.com/photos/163036/mario-luigi-figures-funny-163036.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🔪" },
+                { name: "صعيدي في الجامعة", img: "https://images.pexels.com/photos/207691/pexels-photo-207691.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🎓" },
+                { name: "عسل أسود", img: "https://images.pexels.com/photos/1000445/pexels-photo-1000445.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🇪🇬" }
             ],
             food: [
-                { name: "كشري", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Kushari_in_Cairo.jpg/250px-Kushari_in_Cairo.jpg" },
-                { name: "بيتزا", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Pizza-3007395.jpg/250px-Pizza-3007395.jpg" },
-                { name: "برجر", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/RedDot_Burger.jpg/250px-RedDot_Burger.jpg" },
-                { name: "ملوخية", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Mulukhiyah_1.jpg/250px-Mulukhiyah_1.jpg" },
-                { name: "شاورما", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Shawarma_3.jpg/250px-Shawarma_3.jpg" },
-                { name: "طعمية / فلافل", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Falafel_balls.jpg/250px-Falafel_balls.jpg" },
-                { name: "فول مدمس", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Ful_medames_ Cairo.jpg/250px-Ful_medames_Cairo.jpg" },
-                { name: "فتة مصرية", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Egyptian_Fatteh.jpg/250px-Egyptian_Fatteh.jpg" },
-                { name: "حواوشي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Hawawshi.jpg/250px-Hawawshi.jpg" },
-                { name: "سوشي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sushi_platter.jpg/250px-Sushi_platter.jpg" },
-                { name: "كبسة", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Kabsa_chicken.jpg/250px-Kabsa_chicken.jpg" },
-                { name: "أم علي", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Om_Ali.jpg/250px-Om_Ali.jpg" },
-                { name: "بشاميل", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Macaroni_Nokoss.jpg/250px-Macaroni_Nokoss.jpg" },
-                { name: "كباب وكتفتة", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Kebab_plat.jpg/250px-Kebab_plat.jpg" },
-                { name: "وافل", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Waffles_with_strawberries.jpg/250px-Waffles_with_strawberries.jpg" }
+                { name: "كشري", img: "https://images.pexels.com/photos/1279330/pexels-photo-1279330.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🍲" },
+                { name: "بيتزا", img: "https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🍕" },
+                { name: "برجر", img: "https://images.pexels.com/photos/1639557/pexels-photo-1639557.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🍔" },
+                { name: "ملوخية", img: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🌿" },
+                { name: "شاورما", img: "https://images.pexels.com/photos/461198/pexels-photo-461198.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🥙" },
+                { name: "طعمية / فلافل", img: "https://images.pexels.com/photos/1583884/pexels-photo-1583884.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🧆" },
+                { name: "فول مدمس", img: "https://images.pexels.com/photos/6287519/pexels-photo-6287519.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🥣" },
+                { name: "فتة مصرية", img: "https://images.pexels.com/photos/6287525/pexels-photo-6287525.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🍚" },
+                { name: "حواوشي", img: "https://images.pexels.com/photos/2983101/pexels-photo-2983101.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🥩" },
+                { name: "سوشي", img: "https://images.pexels.com/photos/357756/pexels-photo-357756.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🍣" },
+                { name: "كبسة", img: "https://images.pexels.com/photos/1624487/pexels-photo-1624487.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🍗" },
+                { name: "أم علي", img: "https://images.pexels.com/photos/376464/pexels-photo-376464.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🍨" },
+                { name: "بشاميل", img: "https://images.pexels.com/photos/1279330/pexels-photo-1279330.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🧀" },
+                { name: "كباب وكفتة", img: "https://images.pexels.com/photos/2233729/pexels-photo-2233729.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🍢" },
+                { name: "وافل", img: "https://images.pexels.com/photos/376464/pexels-photo-376464.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🧇" }
             ]
         };
 
@@ -243,6 +265,14 @@
             });
         }
 
+        function leaveRoom() {
+            if (client) {
+                client.end();
+                client = null;
+            }
+            location.reload(); // إعادة ضبط الصفحة والرجوع للقائمة
+        }
+
         function joinRoom() {
             const code = document.getElementById('joinCodeInput').value.trim();
             if(!code) return alert("أدخل كود الغرفة أولاً!");
@@ -260,7 +290,14 @@
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.id = `card-${index}`;
-                card.innerHTML = `<img src="${item.img}" alt="${item.name}"><span>${item.name}</span>`;
+                
+                // إضافة الصورة مع كود طوارئ (Fallback) في حالة البطء أو انقطاع النت
+                card.innerHTML = `
+                    <div class="card-img-container">
+                        <img src="${item.img}" alt="${item.name}" onerror="this.outerHTML='${item.backup}'">
+                    </div>
+                    <span>${item.name}</span>
+                `;
                 card.onclick = () => handleCardClick(index, item.name);
                 grid.appendChild(card);
             });
