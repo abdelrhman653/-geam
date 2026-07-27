@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>اقف في صفي - أونلاين</title>
-    <!-- مكتبة الربط الأونلاين -->
+    <title>اقف في صفي - أونلاين وأوفلاين</title>
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
@@ -13,31 +12,36 @@
         h1 { color: #38bdf8; font-size: 22px; margin-bottom: 5px; text-align: center; }
         .subtitle { color: #94a3b8; font-size: 13px; margin-bottom: 10px; text-align: center; }
 
-        /* شريط كود الغرفة الثابت */
         .room-bar {
             background: #0284c7; color: #fff; padding: 8px 15px; border-radius: 20px;
             font-weight: bold; font-size: 14px; margin-bottom: 10px; text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3); width: 100%; max-width: 500px;
+            width: 100%; max-width: 500px;
         }
 
-        .online-box {
+        .box {
             background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 12px;
             width: 100%; max-width: 500px; text-align: center; margin-bottom: 10px;
         }
+        
         input { width: 100%; padding: 10px; margin: 5px 0; background: #0f172a; border: 1px solid #475569; color: #fff; border-radius: 6px; text-align: center; font-size: 15px; }
+        
         button { width: 100%; padding: 11px; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px; }
         button.green { background: #10b981; }
+        button.purple { background: #8b5cf6; }
+        button.gray { background: #475569; }
 
-        .categories { display: flex; gap: 5px; overflow-x: auto; width: 100%; max-width: 500px; margin-bottom: 10px; padding-bottom: 5px; }
-        .cat-btn { background: #334155; color: #38bdf8; border: none; padding: 6px 12px; border-radius: 15px; font-size: 12px; white-space: nowrap; }
-        .cat-btn.active { background: #38bdf8; color: #0f172a; font-weight: bold; }
+        /* شبكة اختيار الفئات */
+        .cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
+        .cat-card { background: #0f172a; border: 2px solid #3b82f6; border-radius: 8px; padding: 12px; cursor: pointer; font-weight: bold; }
+        .cat-card:hover { background: #1e3a8a; }
 
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; max-width: 500px; }
-        .card { background: #1e293b; border: 2px solid #334155; border-radius: 8px; padding: 8px 2px; text-align: center; cursor: pointer; }
-        .card .icon { font-size: 24px; }
-        .card span { font-size: 10px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        /* شبكة الكروت بالصور */
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; max-width: 500px; }
+        .card { background: #1e293b; border: 2px solid #334155; border-radius: 8px; padding: 6px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
+        .card img { width: 100%; height: 75px; object-fit: cover; border-radius: 6px; margin-bottom: 4px; }
+        .card span { font-size: 11px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
         .card.my-choice { border-color: #f59e0b; background: #78350f; }
-        .card.eliminated { opacity: 0.2; filter: grayscale(100%); background: #450a0a; border-color: #ef4444; }
+        .card.eliminated { opacity: 0.15; filter: grayscale(100%); background: #450a0a; border-color: #ef4444; }
 
         .chat-box { background: #1e293b; width: 100%; max-width: 500px; border-radius: 8px; padding: 10px; margin-top: 10px; border: 1px solid #334155; }
         .messages { max-height: 120px; overflow-y: auto; font-size: 12px; margin-bottom: 8px; text-align: right; background: #0f172a; padding: 8px; border-radius: 6px; }
@@ -51,37 +55,43 @@
 </head>
 <body>
 
-    <h1>🎮 اقف في صفي (أونلاين)</h1>
-    <div class="subtitle" id="status">أنشئ غرفة أو أدخل كود صاحبك!</div>
+    <h1>🎮 اقف في صفي</h1>
+    <div class="subtitle" id="status">اختر طريقة اللعب للبدء!</div>
 
-    <!-- شريط الكود الثابت بعد الدخول -->
     <div id="roomBar" class="room-bar hidden">🔑 كود الغرفة: <span id="activeRoomCode">---</span></div>
 
-    <div id="setup-box" class="online-box">
-        <button onclick="createRoom()" class="green">🌐 إنشاء كود غرفة جديد</button>
+    <!-- 1. شاشة اختيار النظام (أونلاين أم أوفلاين) -->
+    <div id="mode-box" class="box">
+        <button onclick="startOnlineSetup()" class="green">🌐 لعب أونلاين مع صديق</button>
+        <button onclick="startOfflineCategorySelect()" class="purple" style="margin-top: 10px;">🤖 لعب أوفلاين ضد الكمبيوتر</button>
         <hr style="border-color:#334155; margin:15px 0;">
         <input type="text" id="joinCodeInput" placeholder="أدخل كود غرفة صاحبك هنا...">
-        <button onclick="joinRoom()">انضمام لغرفة صاحبك 🚀</button>
+        <button onclick="joinRoom()">انضمام لغرفة أونلاين 🚀</button>
     </div>
 
-    <div id="game-ui" class="hidden" style="width:100%; max-width:500px;">
-        <div class="categories">
-            <button class="cat-btn active" onclick="setCategory('players')">⚽ لاعيبة</button>
-            <button class="cat-btn" onclick="setCategory('actors')">🎬 مشاهير</button>
-            <button class="cat-btn" onclick="setCategory('movies')">🍿 أفلام</button>
-            <button class="cat-btn" onclick="setCategory('food')">🍔 أكل</button>
-            <button class="cat-btn" onclick="setCategory('animals')">🦁 حيوانات</button>
+    <!-- 2. شاشة اختيار الفئة -->
+    <div id="category-box" class="box hidden">
+        <h3 style="color:#38bdf8;">اختر الفئة للعبة:</h3>
+        <div class="cat-grid">
+            <div class="cat-card" onclick="confirmCategory('players')">⚽ لاعيبة كرة</div>
+            <div class="cat-card" onclick="confirmCategory('actors')">🎬 مشاهير وفنانين</div>
+            <div class="cat-card" onclick="confirmCategory('movies')">🍿 أفلام وسينما</div>
+            <div class="cat-card" onclick="confirmCategory('food')">🍔 أكلات شعبية</div>
         </div>
+        <button onclick="location.reload()" class="gray" style="margin-top:15px;">رجوع للقائمة</button>
+    </div>
 
+    <!-- 3. شاشات اللعبة الرئيسية -->
+    <div id="game-ui" class="hidden" style="width:100%; max-width:500px;">
         <div id="grid" class="grid"></div>
 
         <div class="chat-box">
             <div id="messages" class="messages"><b>سجل الأسئلة والإجابات:</b></div>
             <div class="chat-input">
-                <input type="text" id="questionInput" placeholder="اسأل صاحبك أي سؤال...">
+                <input type="text" id="questionInput" placeholder="اسأل أي سؤال (مثلاً: هل بيلعب في مصر؟)...">
                 <button onclick="sendQuestion()">إرسال</button>
             </div>
-            <div style="display:flex; gap:5px; margin-top:5px;">
+            <div id="quick-answers" style="display:flex; gap:5px; margin-top:5px;">
                 <button onclick="sendAnswer('نعم! ✅')" style="background:#10b981; font-size:11px;">رد بـ (نعم)</button>
                 <button onclick="sendAnswer('لا! ❌')" style="background:#ef4444; font-size:11px;">رد بـ (لا)</button>
             </div>
@@ -89,56 +99,102 @@
     </div>
 
     <script>
+        let isOffline = false;
         let client = null;
         let currentRoom = "";
         let myClientId = "user_" + Math.random().toString(36).substring(7);
         let mySecretPlayer = null;
-        let currentCategory = 'players';
+        let botSecretPlayer = null;
+        let selectedCategory = 'players';
 
+        // قاعدة بيانات موسعة ومزودة بصور حقيقية
         const DATABASE = {
             players: [
-                { name: "محمد صلاح", icon: "🇪🇬" }, { name: "أبو تريكة", icon: "👑" }, { name: "ميسي", icon: "🇦🇷" }, { name: "رونالدو", icon: "🇵🇹" },
-                { name: "زيدان", icon: "🇫🇷" }, { name: "مرموش", icon: "🦅" }, { name: "بنزيما", icon: "🇫🇷" }, { name: "الشناوي", icon: "🧤" },
-                { name: "مودريتش", icon: "🇭🇷" }, { name: "رونالدينيو", icon: "🤙" }, { name: "إمبابي", icon: "⚡" }, { name: "هالاند", icon: "🤖" },
-                { name: "نيمار", icon: "🇧🇷" }, { name: "بوفون", icon: "🧱" }, { name: "ميدو", icon: "🎙️" }, { name: "مالديني", icon: "🛡️" }
+                { name: "محمد صلاح", img: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=200&auto=format&fit=crop" },
+                { name: "محمد أبو تريكة", img: "https://images.unsplash.com/photo-1518091043644-c1d4457512c6?w=200&auto=format&fit=crop" },
+                { name: "ليونيل ميسي", img: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=200&auto=format&fit=crop" },
+                { name: "كريستيانو رونالدو", img: "https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?w=200&auto=format&fit=crop" },
+                { name: "عمر مرموش", img: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=200&auto=format&fit=crop" },
+                { name: "محمد الشناوي", img: "https://images.unsplash.com/photo-1577223625816-7546f13df25d?w=200&auto=format&fit=crop" },
+                { name: "كيليان إمبابي", img: "https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=200&auto=format&fit=crop" },
+                { name: "إرلينج هالاند", img: "https://images.unsplash.com/photo-1489944440615-453fc2b6a9a9?w=200&auto=format&fit=crop" },
+                { name: "زين الدين زيدان", img: "https://images.unsplash.com/photo-1560272564-66952074f494?w=200&auto=format&fit=crop" }
             ],
             actors: [
-                { name: "عادل إمام", icon: "🕶️" }, { name: "أحمد حلمي", icon: "👓" }, { name: "توم كروز", icon: "🎬" }, { name: "ويل سميث", icon: "🎭" },
-                { name: "كريم عبد العزيز", icon: "🌟" }, { name: "أحمد السقا", icon: "🐎" }, { name: "دي كابريو", icon: "🏆" }, { name: "هنيدي", icon: "😄" }
+                { name: "عادل إمام", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop" },
+                { name: "أحمد حلمي", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop" },
+                { name: "كريم عبد العزيز", img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&auto=format&fit=crop" },
+                { name: "أحمد السقا", img: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=crop" },
+                { name: "توم كروز", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&auto=format&fit=crop" },
+                { name: "ويل سميث", img: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=200&auto=format&fit=crop" }
             ],
             movies: [
-                { name: "الجزيرة", icon: "🏝️" }, { name: "إبراهيم الأبيض", icon: "🔪" }, { name: "Avatar", icon: "🌌" }, { name: "Titanic", icon: "🚢" },
-                { name: "الفيل الأزرق", icon: "🐘" }, { name: "Inception", icon: "🌀" }, { name: "ولاد رزق", icon: "🔥" }, { name: "Interstellar", icon: "🚀" }
+                { name: "الجزيرة", img: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200&auto=format&fit=crop" },
+                { name: "الفيل الأزرق", img: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=200&auto=format&fit=crop" },
+                { name: "ولاد رزق", img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=200&auto=format&fit=crop" },
+                { name: "Avatar", img: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200&auto=format&fit=crop" },
+                { name: "Titanic", img: "https://images.unsplash.com/photo-1509281373149-e957c6296406?w=200&auto=format&fit=crop" }
             ],
             food: [
-                { name: "كشري", icon: "🍲" }, { name: "بيتزا", icon: "🍕" }, { name: "أم علي", icon: "🍨" }, { name: "برجر", icon: "🍔" },
-                { name: "ملوخية", icon: "🌿" }, { name: "شاورما", icon: "🥙" }, { name: "فطير", icon: "🥮" }, { name: "آيس كريم", icon: "🍦" }
-            ],
-            animals: [
-                { name: "أسد", icon: "🦁" }, { name: "صقر", icon: "🦅" }, { name: "أرنب", icon: "🐇" }, { name: "قرش", icon: "🦈" },
-                { name: "زرافة", icon: "🦒" }, { name: "نمر", icon: "🐅" }, { name: "بطريق", icon: "🐧" }, { name: "دب", icon: "🐻" }
+                { name: "كشري", img: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&auto=format&fit=crop" },
+                { name: "بيتزا", img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=200&auto=format&fit=crop" },
+                { name: "برجر", img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&auto=format&fit=crop" },
+                { name: "ملوخية", img: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=200&auto=format&fit=crop" },
+                { name: "شاورما", img: "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=200&auto=format&fit=crop" }
             ]
         };
 
-        function connectMQTT(roomCode) {
-            document.getElementById('status').innerText = "جاري الاتصال بالسيرفر الأونلاين...";
+        function startOnlineSetup() {
+            isOffline = false;
+            document.getElementById('mode-box').classList.add('hidden');
+            document.getElementById('category-box').classList.remove('hidden');
+        }
+
+        function startOfflineCategorySelect() {
+            isOffline = true;
+            document.getElementById('mode-box').classList.add('hidden');
+            document.getElementById('category-box').classList.remove('hidden');
+        }
+
+        function confirmCategory(cat) {
+            selectedCategory = cat;
+            document.getElementById('category-box').classList.add('hidden');
             
+            if (isOffline) {
+                // إعداد اللعب أوفلاين ضد الكمبيوتر
+                document.getElementById('roomBar').classList.remove('hidden');
+                document.getElementById('activeRoomCode').innerText = "أوفلاين (ضد الكمبيوتر)";
+                document.getElementById('game-ui').classList.remove('hidden');
+                document.getElementById('quick-answers').classList.add('hidden'); // إخفاء أزرار الرد في الأوفلاين
+                
+                // اختيار الكمبيوتر لعنصر عشوائي
+                const items = DATABASE[selectedCategory];
+                botSecretPlayer = items[Math.floor(Math.random() * items.length)].name;
+
+                document.getElementById('status').innerText = "اضغط على كارت لاختياره سرّاً من الكمبيوتر!";
+                renderBoard();
+            } else {
+                // إعداد اللعب أونلاين
+                const code = "ABDO-" + Math.floor(1000 + Math.random() * 9000);
+                connectMQTT(code);
+            }
+        }
+
+        function connectMQTT(roomCode) {
+            document.getElementById('status').innerText = "جاري الاتصال بالأونلاين...";
             client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
 
             client.on('connect', () => {
                 currentRoom = "abdo_game_room_" + roomCode;
                 client.subscribe(currentRoom);
 
-                // إظهار الكود فوق والشاشة الرئسية للعبة
                 document.getElementById('activeRoomCode').innerText = roomCode;
                 document.getElementById('roomBar').classList.remove('hidden');
-                document.getElementById('setup-box').classList.add('hidden');
                 document.getElementById('game-ui').classList.remove('hidden');
-                document.getElementById('status').innerText = "تم الاتصال! اختر شخصيتك السرية بالضغط عليها.";
+                document.getElementById('status').innerText = "تم الاتصال! اختر شخصيتك السرية بالأول.";
                 
                 renderBoard();
-
-                sendMessage({ type: 'join', sender: myClientId });
+                sendMessage({ type: 'join', category: selectedCategory });
             });
 
             client.on('message', (topic, message) => {
@@ -155,39 +211,29 @@
                         addMessage("النظام", `صاحبك خمن (${data.name}) وكانت إجابة خاطئة ❌`);
                     }
                 } else if (data.type === 'join') {
-                    addMessage("النظام", "انضم صاحبك للغرفة الآن! ابدأوا اللعب 🚀");
+                    addMessage("النظام", "انضم صاحبك للغرفة! ابدأوا اللعب 🚀");
                 }
             });
-        }
-
-        function createRoom() {
-            const code = "ABDO-" + Math.floor(1000 + Math.random() * 9000);
-            connectMQTT(code);
         }
 
         function joinRoom() {
             const code = document.getElementById('joinCodeInput').value.trim();
             if(!code) return alert("أدخل كود الغرفة أولاً!");
+            isOffline = false;
+            document.getElementById('mode-box').classList.add('hidden');
             connectMQTT(code);
-        }
-
-        function sendMessage(obj) {
-            if (client && currentRoom) {
-                obj.sender = myClientId;
-                client.publish(currentRoom, JSON.stringify(obj));
-            }
         }
 
         function renderBoard() {
             const grid = document.getElementById('grid');
             grid.innerHTML = "";
-            const items = DATABASE[currentCategory];
+            const items = DATABASE[selectedCategory];
 
             items.forEach((item, index) => {
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.id = `card-${index}`;
-                card.innerHTML = `<div class="icon">${item.icon}</div><span>${item.name}</span>`;
+                card.innerHTML = `<img src="${item.img}" alt="${item.name}"><span>${item.name}</span>`;
                 card.onclick = () => handleCardClick(index, item.name);
                 grid.appendChild(card);
             });
@@ -198,13 +244,22 @@
             if (!mySecretPlayer) {
                 mySecretPlayer = name;
                 card.classList.add('my-choice');
-                document.getElementById('status').innerText = `اختيارك السرّي: (${name}). اسأل صاحبك أو شطب كروت!`;
+                document.getElementById('status').innerText = `اختيارك السرّي: (${name}). اسأل الآن أو شطب كروت بالضغط عليها!`;
             } else {
-                if (confirm(`هل تريد شطب (${name}) من شبكتك؟`)) {
+                if (confirm(`هل تريد شطب/استبعاد (${name})؟`)) {
                     card.classList.add('eliminated');
-                } else if (confirm(`هل تريد تخمين أن كارت صاحبك هو (${name})؟`)) {
-                    sendMessage({ type: 'guess', name: name });
-                    addMessage("أنت", `خمنت أن كارت صاحبك هو: ${name}`);
+                } else if (confirm(`هل تريد تخمين أن كارت المنافس هو (${name})؟`)) {
+                    if (isOffline) {
+                        if (name === botSecretPlayer) {
+                            alert("🎉 مبروك! خمنت كارت الكمبيوتر صح وفزت باللعبة!");
+                            addMessage("النظام", `🎉 فزت بالمباراة! الكارت كان (${name})`);
+                        } else {
+                            addMessage("الكمبيوتر", `تخمين خاطئ ❌ (${name}) مش كارتي السرّي!`);
+                        }
+                    } else {
+                        sendMessage({ type: 'guess', name: name });
+                        addMessage("أنت", `خمنت أن كارت صاحبك هو: ${name}`);
+                    }
                 }
             }
         }
@@ -213,27 +268,34 @@
             const q = document.getElementById('questionInput').value.trim();
             if(!q) return;
             addMessage("أنت", q);
-            sendMessage({ type: 'chat', text: q });
+
+            if (isOffline) {
+                // رد أوتوماتيكي بسيط من الكمبيوتر في وضع الأوفلاين
+                setTimeout(() => {
+                    addMessage("الكمبيوتر", "ركز في صفات الكروت وشطب الملاحظات! 🤔");
+                }, 800);
+            } else {
+                sendMessage({ type: 'chat', text: q });
+            }
             document.getElementById('questionInput').value = "";
         }
 
         function sendAnswer(ans) {
             addMessage("إجابتك", ans);
-            sendMessage({ type: 'chat', text: "الإجابة: " + ans });
+            if (!isOffline) sendMessage({ type: 'chat', text: "الإجابة: " + ans });
+        }
+
+        function sendMessage(obj) {
+            if (client && currentRoom) {
+                obj.sender = myClientId;
+                client.publish(currentRoom, JSON.stringify(obj));
+            }
         }
 
         function addMessage(sender, text) {
             const msgDiv = document.getElementById('messages');
             msgDiv.innerHTML += `<div class="msg"><b>${sender}:</b> ${text}</div>`;
             msgDiv.scrollTop = msgDiv.scrollHeight;
-        }
-
-        function setCategory(cat) {
-            currentCategory = cat;
-            mySecretPlayer = null;
-            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            renderBoard();
         }
     </script>
 </body>
