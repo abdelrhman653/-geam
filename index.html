@@ -1,9 +1,9 @@
-Enter<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>من هو اللاعب؟ - أونلاين & أوفلاين</title>
+    <title>اقف في صفي - لعبة الفئات</title>
     <style>
         * {
             box-sizing: border-box;
@@ -13,396 +13,363 @@ Enter<!DOCTYPE html>
         }
 
         body {
-            background-color: #0f172a;
-            color: #f8fafc;
+            background-color: #0b132b;
+            color: #ffffff;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             min-height: 100vh;
             padding: 15px;
         }
 
-        .card {
-            background: #1e293b;
-            width: 100%;
-            max-width: 480px;
-            padding: 24px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            border: 1px solid #334155;
-            text-align: center;
-        }
-
         h1 {
             color: #38bdf8;
             font-size: 24px;
-            margin-bottom: 8px;
-        }
-
-        .subtitle {
-            color: #94a3b8;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #475569;
-            background: #0f172a;
-            color: #fff;
-            font-size: 16px;
-            margin-bottom: 12px;
-            outline: none;
+            margin-bottom: 10px;
             text-align: center;
         }
 
-        input:focus {
-            border-color: #38bdf8;
+        .category-select {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 600px;
         }
 
-        button {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: none;
-            background: #2563eb;
-            color: white;
-            font-size: 16px;
-            font-weight: bold;
+        .cat-btn {
+            background: #1c2541;
+            color: #38bdf8;
+            border: 1px solid #3a506b;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 14px;
             cursor: pointer;
             transition: 0.2s;
+        }
+
+        .cat-btn.active, .cat-btn:hover {
+            background: #38bdf8;
+            color: #0b132b;
+            font-weight: bold;
+        }
+
+        .status-bar {
+            background: #1c2541;
+            width: 100%;
+            max-width: 600px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 15px;
+            color: #f59e0b;
+            margin-bottom: 15px;
+            border: 1px solid #3a506b;
+        }
+
+        /* شبكة الكروت */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: #1c2541;
+            border: 2px solid #3a506b;
+            border-radius: 10px;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .card:hover {
+            border-color: #38bdf8;
+            transform: translateY(-2px);
+        }
+
+        .card .icon {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .card span {
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* الكروت المستبعدة والمكشوفة */
+        .card.eliminated {
+            background: #450a0a;
+            border-color: #ef4444;
+            opacity: 0.35;
+            filter: grayscale(100%);
+        }
+
+        .card.correct {
+            background: #065f46;
+            border-color: #10b981;
+            animation: pulse 1s infinite;
+        }
+
+        /* قسم الأسئلة */
+        .questions-section {
+            background: #1c2541;
+            width: 100%;
+            max-width: 600px;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #3a506b;
+        }
+
+        .questions-title {
+            font-size: 14px;
+            color: #94a3b8;
             margin-bottom: 10px;
         }
 
-        button:hover {
-            background: #1d4ed8;
-        }
-
-        .btn-secondary {
-            background: #475569;
-        }
-        
-        .btn-secondary:hover {
-            background: #334155;
-        }
-
-        .btn-bot {
-            background: #10b981;
-        }
-
-        .btn-bot:hover {
-            background: #059669;
-        }
-
-        .room-info {
-            background: #0f172a;
-            padding: 12px;
-            border-radius: 8px;
-            margin: 15px 0;
-            border: 1px dashed #38bdf8;
-        }
-
-        .status {
-            font-size: 14px;
-            color: #f59e0b;
-            margin-top: 10px;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .clubs-container {
+        .questions-list {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            justify-content: center;
-            margin: 15px 0;
         }
 
-        .badge {
-            background: #334155;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 14px;
-            color: #38bdf8;
-        }
-
-        .history-box {
-            text-align: right;
-            background: #0f172a;
-            padding: 10px;
-            border-radius: 8px;
-            max-height: 120px;
-            overflow-y: auto;
-            margin-top: 10px;
+        .q-btn {
+            background: #3a506b;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
             font-size: 13px;
+            cursor: pointer;
+            transition: 0.2s;
         }
 
-        .history-item {
-            padding: 4px 0;
-            border-bottom: 1px solid #1e293b;
+        .q-btn:hover {
+            background: #2563eb;
+        }
+
+        .q-btn:disabled {
+            background: #1e293b;
+            color: #64748b;
+            cursor: not-allowed;
+        }
+
+        .action-btn {
+            margin-top: 15px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
         }
     </style>
-
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCPLSt21cRCgUsL3QA2TakbI0af07zQKsM",
-            authDomain: "whoisitgame.firebaseapp.com",
-            databaseURL: "https://whoisitgame-default-rtdb.firebaseio.com",
-            projectId: "whoisitgame",
-            storageBucket: "whoisitgame.firebasestorage.app",
-            messagingSenderId: "347423883446",
-            appId: "1:347423883446:web:9c435668649ec0e8d76617"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        // قائمة اللاعبين
-        const PLAYERS_DATABASE = [
-            { name: "محمد صلاح", clubs: ["المقاولون العرب", "بازل", "تشيلسي", "فيورنتينا", "روما", "ليفربول"] },
-            { name: "كريستيانو رونالدو", clubs: ["سبورتينغ لشبونة", "مانشستر يونايتد", "ريال مدريد", "يوفنتوس", "النصر"] },
-            { name: "ليونيل ميسي", clubs: ["برشلونة", "باريس سان جيرمان", "إنتر ميامي"] },
-            { name: "كريم بنزيما", clubs: ["ليون", "ريال مدريد", "الاتحاد"] },
-            { name: "رياض محرز", clubs: ["لوهافر", "ليستر سيتي", "مانشستر سيتي", "الأهلي السعودي"] },
-            { name: "نيمار", clubs: ["سانتوس", "برشلونة", "باريس سان جيرمان", "الهلال"] },
-            { name: "لوكا مودريتش", clubs: ["دينامو زغرب", "توتنهام", "ريال مدريد"] }
-        ];
-
-        let roomId = "";
-        let playerRole = ""; // 'host' or 'guest'
-        let playerName = "";
-        let isVsBot = false;
-        let currentSecretPlayer = null;
-        let botTurnCount = 0;
-
-        // بدء اللعب ضد الكمبيوتر
-        window.startBotGame = function() {
-            const nameInput = document.getElementById('username').value;
-            playerName = nameInput || "اللاعب";
-            isVsBot = true;
-
-            currentSecretPlayer = PLAYERS_DATABASE[Math.floor(Math.random() * PLAYERS_DATABASE.length)];
-
-            document.getElementById('setup-screen').classList.add('hidden');
-            document.getElementById('game-screen').classList.remove('hidden');
-            document.getElementById('display-room-code').innerText = "الكمبيوتر 🤖";
-
-            // إظهار الأندية
-            const clubsDiv = document.getElementById('clubs-list');
-            clubsDiv.innerHTML = "";
-            currentSecretPlayer.clubs.forEach(club => {
-                clubsDiv.innerHTML += `<span class="badge">${club}</span>`;
-            });
-
-            document.getElementById('game-status').innerText = "دورك الآن للتخمين!";
-            document.getElementById('history').innerHTML = "<b>سجل المحاولات:</b><br>";
-        }
-
-        // إنشاء غرفة أونلاين
-        window.createRoom = function() {
-            const nameInput = document.getElementById('username').value;
-            if(!nameInput) return alert("اكتب اسمك أولاً!");
-            
-            playerName = nameInput;
-            roomId = Math.floor(1000 + Math.random() * 9000).toString();
-            playerRole = 'host';
-            isVsBot = false;
-
-            const randomPlayer = PLAYERS_DATABASE[Math.floor(Math.random() * PLAYERS_DATABASE.length)];
-
-            set(ref(db, 'rooms/' + roomId), {
-                host: playerName,
-                guest: "",
-                secretPlayer: randomPlayer,
-                turn: 'host',
-                guesses: [],
-                winner: ""
-            }).then(() => {
-                listenToRoom();
-            });
-        }
-
-        // انضمام لغرفة أونلاين
-        window.joinRoom = function() {
-            const nameInput = document.getElementById('username').value;
-            const codeInput = document.getElementById('roomCodeInput').value;
-            if(!nameInput || !codeInput) return alert("اكتب اسمك وكود الغرفة!");
-
-            playerName = nameInput;
-            roomId = codeInput;
-            playerRole = 'guest';
-            isVsBot = false;
-
-            update(ref(db, 'rooms/' + roomId), {
-                guest: playerName
-            }).then(() => {
-                listenToRoom();
-            });
-        }
-
-        function listenToRoom() {
-            document.getElementById('setup-screen').classList.add('hidden');
-            document.getElementById('game-screen').classList.remove('hidden');
-            document.getElementById('display-room-code').innerText = roomId;
-
-            onValue(ref(db, 'rooms/' + roomId), (snapshot) => {
-                const data = snapshot.val();
-                if(!data) return;
-
-                if(!data.guest) {
-                    document.getElementById('game-status').innerText = "في انتظار انضمام اللاعب الثاني...";
-                    return;
-                }
-
-                const clubsDiv = document.getElementById('clubs-list');
-                clubsDiv.innerHTML = "";
-                data.secretPlayer.clubs.forEach(club => {
-                    clubsDiv.innerHTML += `<span class="badge">${club}</span>`;
-                });
-
-                if(data.winner) {
-                    document.getElementById('game-status').innerText = `🎉 الفائز هو: ${data.winner}! اللاعب هو (${data.secretPlayer.name})`;
-                } else {
-                    const isMyTurn = (data.turn === playerRole);
-                    document.getElementById('game-status').innerText = isMyTurn ? "دورك الآن للتخمين!" : "دور المنافس يفكر...";
-                }
-
-                const historyDiv = document.getElementById('history');
-                historyDiv.innerHTML = "<b>سجل المحاولات:</b><br>";
-                if(data.guesses) {
-                    Object.values(data.guesses).forEach(g => {
-                        historyDiv.innerHTML += `<div class="history-item"><b>${g.by}:</b> ${g.text} ${g.correct ? '✅' : '❌'}</div>`;
-                    });
-                }
-            });
-        }
-
-        // التخمين
-        window.makeGuess = function() {
-            const guessInput = document.getElementById('guessInput').value.trim();
-            if(!guessInput) return;
-
-            if (isVsBot) {
-                // وضع الكمبيوتر
-                const isCorrect = guessInput.toLowerCase() === currentSecretPlayer.name.toLowerCase();
-                const historyDiv = document.getElementById('history');
-
-                historyDiv.innerHTML += `<div class="history-item"><b>${playerName}:</b> ${guessInput} ${isCorrect ? '✅' : '❌'}</div>`;
-                document.getElementById('guessInput').value = "";
-
-                if (isCorrect) {
-                    document.getElementById('game-status').innerText = `🎉 مبروك! إجابة صحيحة، اللاعب هو ${currentSecretPlayer.name}!`;
-                } else {
-                    document.getElementById('game-status').innerText = "الكمبيوتر يفكر في إجابته...";
-                    setTimeout(botMakeGuess, 1500);
-                }
-            } else {
-                // وضع الأونلاين
-                onValue(ref(db, 'rooms/' + roomId), (snapshot) => {
-                    const data = snapshot.val();
-                    if(data.turn !== playerRole || data.winner) return;
-
-                    const isCorrect = guessInput.toLowerCase() === data.secretPlayer.name.toLowerCase();
-                    const nextTurn = playerRole === 'host' ? 'guest' : 'host';
-
-                    const newGuesses = data.guesses || [];
-                    newGuesses.push({
-                        by: playerName,
-                        text: guessInput,
-                        correct: isCorrect
-                    });
-
-                    const updates = {
-                        guesses: newGuesses,
-                        turn: nextTurn
-                    };
-
-                    if(isCorrect) {
-                        updates.winner = playerName;
-                    }
-
-                    update(ref(db, 'rooms/' + roomId), updates);
-                    document.getElementById('guessInput').value = "";
-                }, { onlyOnce: true });
-            }
-        }
-
-        // ذكاء الكمبيوتر
-        function botMakeGuess() {
-            botTurnCount++;
-            const historyDiv = document.getElementById('history');
-            
-            // الكمبيوتر يخمن صح بعد المحاولة الثالثة أو يخمن عشوائي
-            let botGuess = "";
-            let isBotCorrect = false;
-
-            if (botTurnCount >= 3 && Math.random() > 0.4) {
-                botGuess = currentSecretPlayer.name;
-                isBotCorrect = true;
-            } else {
-                const otherPlayers = PLAYERS_DATABASE.filter(p => p.name !== currentSecretPlayer.name);
-                botGuess = otherPlayers[Math.floor(Math.random() * otherPlayers.length)].name;
-            }
-
-            historyDiv.innerHTML += `<div class="history-item"><b>الكمبيوتر 🤖:</b> ${botGuess} ${isBotCorrect ? '✅' : '❌'}</div>`;
-
-            if (isBotCorrect) {
-                document.getElementById('game-status').innerText = `🤖 الكمبيوتر فاز! التخمين الصحيح كان: ${currentSecretPlayer.name}`;
-            } else {
-                document.getElementById('game-status').innerText = "دورك الآن للتخمين!";
-            }
-        }
-    </script>
 </head>
 <body>
 
-    <div class="card">
-        <h1>⚽ من هو اللاعب؟</h1>
-        <p class="subtitle">لعبة تخمين أونلاين أو ضد الكمبيوتر</p>
+    <h1>🎮 اقف في صفي - الفئات</h1>
 
-        <!-- شاشة الدخول -->
-        <div id="setup-screen">
-            <input type="text" id="username" placeholder="اكتب اسمك هنا">
-            
-            <button onclick="startBotGame()" class="btn-bot">🤖 اللعب ضد الكمبيوتر</button>
-            <hr style="border-color: #334155; margin: 15px 0;">
-            
-            <button onclick="createRoom()">إنشاء غرفة أونلاين</button>
-            <input type="text" id="roomCodeInput" placeholder="أدخل كود الغرفة للانضمام" style="margin-top: 10px;">
-            <button onclick="joinRoom()" class="btn-secondary">انضمام لغرفة</button>
-        </div>
-
-        <!-- شاشة اللعب -->
-        <div id="game-screen" class="hidden">
-            <div class="room-info">
-                المنافس: <b id="display-room-code" style="color: #38bdf8;">----</b>
-            </div>
-
-            <p style="font-size: 14px; margin-top: 10px;">مسيرة اللاعب التنقلية:</p>
-            <div id="clubs-list" class="clubs-container">
-                <!-- الأندية بتظهر هنا -->
-            </div>
-
-            <div id="game-status" class="status">جاري التحميل...</div>
-
-            <div style="margin-top: 15px;">
-                <input type="text" id="guessInput" placeholder="اكتب اسم اللاعب...">
-                <button onclick="makeGuess()">إرسال التخمين</button>
-            </div>
-
-            <div id="history" class="history-box">
-                <!-- السجل -->
-            </div>
-        </div>
+    <!-- اختيار الفئة -->
+    <div class="category-select">
+        <button class="cat-btn active" onclick="changeCategory('players')">⚽ لاعيب كرة</button>
+        <button class="cat-btn" onclick="changeCategory('actors')">🎬 مشاهير وممثلين</button>
+        <button class="cat-btn" onclick="changeCategory('movies')">🍿 أفلام</button>
+        <button class="cat-btn" onclick="changeCategory('jobs')">💼 وظائف</button>
+        <button class="cat-btn" onclick="changeCategory('food')">🍔 أكل</button>
+        <button class="cat-btn" onclick="changeCategory('animals')">🦁 حيوانات</button>
     </div>
 
+    <div id="status" class="status-bar">اختر سؤالاً لاستبعاد الخيارات، أو اضغط مباشرة على الكارت للتخمين!</div>
+
+    <!-- شبكة العناصر -->
+    <div id="grid" class="grid-container"></div>
+
+    <!-- قائمة الأسئلة -->
+    <div class="questions-section">
+        <div class="questions-title">اسأل الكمبيوتر استفساراً للاستبعاد:</div>
+        <div id="questions" class="questions-list"></div>
+    </div>
+
+    <button class="action-btn" onclick="initGame()">جولة جديدة 🔄</button>
+
+    <script>
+        // قاعدة البيانات الشاملة للفئات والخواص
+        const DATABASE = {
+            players: {
+                items: [
+                    { name: "محمد صلاح", icon: "🇪🇬", attributes: { isRetired: false, isEgyptian: true, playEurope: true } },
+                    { name: "أبو تريكة", icon: "👑", attributes: { isRetired: true, isEgyptian: true, playEurope: false } },
+                    { name: "ميسي", icon: "🇦🇷", attributes: { isRetired: false, isEgyptian: false, playEurope: false } },
+                    { name: "رونالدو", icon: "🇵🇹", attributes: { isRetired: false, isEgyptian: false, playEurope: false } },
+                    { name: "زيدان", icon: "🇫🇷", attributes: { isRetired: true, isEgyptian: false, playEurope: true } },
+                    { name: "مرموش", icon: "🦅", attributes: { isRetired: false, isEgyptian: true, playEurope: true } }
+                ],
+                questions: [
+                    { label: "هل معتزل؟", key: "isRetired" },
+                    { label: "هل مصري؟", key: "isEgyptian" },
+                    { label: "هل بيلعب في أوروبا حالياً؟", key: "playEurope" }
+                ]
+            },
+            actors: {
+                items: [
+                    { name: "عادل إمام", icon: "🕶️", attributes: { isEgyptian: true, isClassic: true } },
+                    { name: "أحمد حلمي", icon: "👓", attributes: { isEgyptian: true, isClassic: false } },
+                    { name: "توم كروز", icon: "🎬", attributes: { isEgyptian: false, isClassic: true } },
+                    { name: "ويل سميث", icon: "🎭", attributes: { isEgyptian: false, isClassic: false } }
+                ],
+                questions: [
+                    { label: "هل الممثل مصري؟", key: "isEgyptian" },
+                    { label: "هل من الجيل القديم/كلاسيكي؟", key: "isClassic" }
+                ]
+            },
+            movies: {
+                items: [
+                    { name: "الجزيرة", icon: "🏝️", attributes: { isArabic: true, isAction: true } },
+                    { name: "إبراهيم الأبيض", icon: "🔪", attributes: { isArabic: true, isAction: true } },
+                    { name: "Avatar", icon: "🌌", attributes: { isArabic: false, isAction: true } },
+                    { name: "Titanic", icon: "🚢", attributes: { isArabic: false, isAction: false } }
+                ],
+                questions: [
+                    { label: "هل الفيلم عربي؟", key: "isArabic" },
+                    { label: "هل الفيلم أكشن؟", key: "isAction" }
+                ]
+            },
+            jobs: {
+                items: [
+                    { name: "طبيب", icon: "🩺", attributes: { needDegree: true, outdoor: false } },
+                    { name: "مهندس", icon: "🏗️", attributes: { needDegree: true, outdoor: true } },
+                    { name: "طيار", icon: "✈️", attributes: { needDegree: true, outdoor: true } },
+                    { name: "طباخ", icon: "👨‍🍳", attributes: { needDegree: false, outdoor: false } }
+                ],
+                questions: [
+                    { label: "هل تحتاج شهادة جامعية عالية؟", key: "needDegree" },
+                    { label: "هل العمل ميداني/خارجي؟", key: "outdoor" }
+                ]
+            },
+            food: {
+                items: [
+                    { name: "كشري", icon: "🍲", attributes: { isSalty: true, isEgyptian: true } },
+                    { name: "بيتزا", icon: "🍕", attributes: { isSalty: true, isEgyptian: false } },
+                    { name: "أم علي", icon: "🍨", attributes: { isSalty: false, isEgyptian: true } },
+                    { name: "وافل", icon: "🧇", attributes: { isSalty: false, isEgyptian: false } }
+                ],
+                questions: [
+                    { label: "هل أكل حادق؟ (مش حلو)", key: "isSalty" },
+                    { label: "هل أكلة أصلها مصري؟", key: "isEgyptian" }
+                ]
+            },
+            animals: {
+                items: [
+                    { name: "أسد", icon: "🦁", attributes: { isPredator: true, canFly: false } },
+                    { name: "صقر", icon: "🦅", attributes: { isPredator: true, canFly: true } },
+                    { name: "أرنب", icon: "🐇", attributes: { isPredator: false, canFly: false } },
+                    { name: "حمامة", icon: "🕊️", attributes: { isPredator: false, canFly: true } }
+                ],
+                questions: [
+                    { label: "هل مفترس؟", key: "isPredator" },
+                    { label: "هل يطير؟", key: "canFly" }
+                ]
+            }
+        };
+
+        let currentCategory = 'players';
+        let secretItem = null;
+        let gameOver = false;
+
+        function changeCategory(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            initGame();
+        }
+
+        function initGame() {
+            gameOver = false;
+            const categoryData = DATABASE[currentCategory];
+            
+            // اختيار سرّي
+            const randomIndex = Math.floor(Math.random() * categoryData.items.length);
+            secretItem = categoryData.items[randomIndex];
+
+            document.getElementById('status').innerText = "تم اختياره سرّاً! استخدم الأسئلة لاستبعاد الكروت أو اضغط على كارت لتخمينه.";
+
+            // رسم الكروت
+            const grid = document.getElementById('grid');
+            grid.innerHTML = "";
+            categoryData.items.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.id = `card-${index}`;
+                card.onclick = () => guessDirectly(index);
+                card.innerHTML = `
+                    <div class="icon">${item.icon}</div>
+                    <span>${item.name}</span>
+                `;
+                grid.appendChild(card);
+            });
+
+            // رسم الأسئلة
+            const qList = document.getElementById('questions');
+            qList.innerHTML = "";
+            categoryData.questions.forEach((q, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'q-btn';
+                btn.innerText = q.label;
+                btn.onclick = (e) => askQuestion(q.key, q.label, e.target);
+                qList.appendChild(btn);
+            });
+        }
+
+        function askQuestion(attrKey, labelText, btnElement) {
+            if (gameOver) return;
+
+            btnElement.disabled = true;
+            const hasAttribute = secretItem.attributes[attrKey];
+
+            if (hasAttribute) {
+                document.getElementById('status').innerText = `💡 إجابة الكمبيوتر: نعم! (${labelText}) ✅`;
+            } else {
+                document.getElementById('status').innerText = `❌ إجابة الكمبيوتر: لا! (${labelText})`;
+            }
+
+            // استبعاد العناصر غير المتطابقة
+            const categoryItems = DATABASE[currentCategory].items;
+            categoryItems.forEach((item, index) => {
+                if (item.attributes[attrKey] !== hasAttribute) {
+                    document.getElementById(`card-${index}`).classList.add('eliminated');
+                }
+            });
+        }
+
+        function guessDirectly(index) {
+            if (gameOver) return;
+
+            const selectedItem = DATABASE[currentCategory].items[index];
+            const card = document.getElementById(`card-${index}`);
+
+            if (selectedItem.name === secretItem.name) {
+                card.classList.add('correct');
+                document.getElementById('status').innerText = `🎉 ممتاز يا عبدو! إجابة صحيحة، هو (${secretItem.name})!`;
+                gameOver = true;
+            } else {
+                card.classList.add('eliminated');
+                document.getElementById('status').innerText = `❌ ليس (${selectedItem.name})! حاول مجدداً.`;
+            }
+        }
+
+        // بدء اللعبة لأول مرة
+        initGame();
+    </script>
 </body>
 </html>
