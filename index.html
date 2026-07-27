@@ -12,7 +12,6 @@
         h1 { color: #38bdf8; font-size: 22px; margin-bottom: 5px; text-align: center; }
         .subtitle { color: #94a3b8; font-size: 13px; margin-bottom: 10px; text-align: center; }
 
-        /* شريط الغرفة وزر الخروج */
         .room-bar {
             background: #0284c7; color: #fff; padding: 8px 12px; border-radius: 20px;
             font-weight: bold; font-size: 14px; margin-bottom: 10px;
@@ -39,13 +38,14 @@
         .cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
         .cat-card { background: #0f172a; border: 2px solid #3b82f6; border-radius: 8px; padding: 12px; cursor: pointer; font-weight: bold; }
 
-        /* تنسيق شبكة الصور مع نظام العرض الضمني */
+        /* شبكة الكروت */
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; max-width: 500px; }
         .card { 
             background: #1e293b; border: 2px solid #334155; border-radius: 8px; padding: 6px; 
             text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; 
-            overflow: hidden;
+            overflow: hidden; transition: transform 0.1s;
         }
+        .card:active { transform: scale(0.96); }
         .card-img-container {
             width: 100%; height: 85px; border-radius: 6px; margin-bottom: 4px;
             background: #0f172a; display: flex; align-items: center; justify-content: center;
@@ -63,6 +63,24 @@
         .chat-input input { margin: 0; }
         .chat-input button { width: auto; padding: 0 15px; }
 
+        /* نافذة الاختيار الاحترافية (Custom Popup Modal) */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #1e293b; border: 2px solid #38bdf8; border-radius: 16px;
+            padding: 20px; width: 85%; max-width: 320px; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .modal-title { font-size: 16px; font-weight: bold; color: #38bdf8; margin-bottom: 15px; }
+        .modal-actions { display: flex; flex-direction: column; gap: 8px; }
+        .btn-guess { background: #10b981; }
+        .btn-eliminate { background: #ef4444; }
+        .btn-cancel { background: #475569; }
+
         .hidden { display: none !important; }
     </style>
 </head>
@@ -71,7 +89,6 @@
     <h1>🎮 اقف في صفي</h1>
     <div class="subtitle" id="status">اختر طريقة اللعب للبدء!</div>
 
-    <!-- شريط الغرفة + زر الخروج -->
     <div id="roomBar" class="room-bar hidden">
         <span>🔑 الكود: <b id="activeRoomCode">---</b></span>
         <button class="leave-btn" onclick="leaveRoom()">🚪 خروج</button>
@@ -115,6 +132,18 @@
         </div>
     </div>
 
+    <!-- 4. نافذة خيارات الكارت المخصصة -->
+    <div id="action-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-title" id="modal-card-name">اسم الكارت</div>
+            <div class="modal-actions">
+                <button class="btn-guess" onclick="executeAction('guess')">🎯 تخمين إنه كارت المنافس</button>
+                <button class="btn-eliminate" onclick="executeAction('eliminate')">❌ شطب / استبعاد الكارت</button>
+                <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let isOffline = false;
         let client = null;
@@ -123,76 +152,78 @@
         let mySecretPlayer = null;
         let botSecretPlayer = null;
         let selectedCategory = 'players';
+        let activeCardIndex = null;
+        let activeCardName = "";
 
-        // روابط صور ثابتة ومضمونة 100% بدون حظر
+        // صور واضحة ومباشرة لكل شخصية عبر مصدر CDN ثابت
         const DATABASE = {
             players: [
-                { name: "محمد صلاح", img: "https://images.pexels.com/photos/3621104/pexels-photo-3621104.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "⚽" },
-                { name: "أبو تريكة", img: "https://images.pexels.com/photos/274422/pexels-photo-274422.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "👑" },
-                { name: "ميسي", img: "https://images.pexels.com/photos/1884574/pexels-photo-1884574.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🇦🇷" },
-                { name: "رونالدو", img: "https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🇵🇹" },
-                { name: "عمر مرموش", img: "https://images.pexels.com/photos/47730/the-ball-stadion-football-the-pitch-47730.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🇪🇬" },
-                { name: "محمد الشناوي", img: "https://images.pexels.com/photos/262508/pexels-photo-262508.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🧤" },
-                { name: "إمبابي", img: "https://images.pexels.com/photos/399187/pexels-photo-399187.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "⚡" },
-                { name: "هالاند", img: "https://images.pexels.com/photos/1618269/pexels-photo-1618269.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🤖" },
-                { name: "زيدان", img: "https://images.pexels.com/photos/209841/pexels-photo-209841.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🇫🇷" },
-                { name: "مودريتش", img: "https://images.pexels.com/photos/269948/pexels-photo-269948.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🇭🇷" },
-                { name: "بنزيما", img: "https://images.pexels.com/photos/3684122/pexels-photo-3684122.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🏆" },
-                { name: "نيمار", img: "https://images.pexels.com/photos/159684/soccer-player-football-kick-159684.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🇧🇷" },
-                { name: "مصطفى محمد", img: "https://images.pexels.com/photos/274422/pexels-photo-274422.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🏹" },
-                { name: "رونالدينيو", img: "https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🤙" },
-                { name: "شيكابالا", img: "https://images.pexels.com/photos/47730/the-ball-stadion-football-the-pitch-47730.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🏹" }
+                { name: "محمد صلاح", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png", backup: "⚽" },
+                { name: "أبو تريكة", img: "https://img.icons8.com/color/120/football-player.png", backup: "👑" },
+                { name: "ميسي", img: "https://img.icons8.com/color/120/lionel-messi.png", backup: "🇦🇷" },
+                { name: "رونالدو", img: "https://img.icons8.com/color/120/cristiano-ronaldo.png", backup: "🇵🇹" },
+                { name: "عمر مرموش", img: "https://img.icons8.com/color/120/soccer-ball.png", backup: "🇪🇬" },
+                { name: "محمد الشناوي", img: "https://img.icons8.com/color/120/goalkeeper.png", backup: "🧤" },
+                { name: "إمبابي", img: "https://img.icons8.com/color/120/running.png", backup: "⚡" },
+                { name: "هالاند", img: "https://img.icons8.com/color/120/robot.png", backup: "🤖" },
+                { name: "زيدان", img: "https://img.icons8.com/color/120/trophy.png", backup: "🇫🇷" },
+                { name: "مودريتش", img: "https://img.icons8.com/color/120/medal.png", backup: "🇭🇷" },
+                { name: "بنزيما", img: "https://img.icons8.com/color/120/crown.png", backup: "🏆" },
+                { name: "نيمار", img: "https://img.icons8.com/color/120/brazil.png", backup: "🇧🇷" },
+                { name: "مصطفى محمد", img: "https://img.icons8.com/color/120/archery.png", backup: "🏹" },
+                { name: "رونالدينيو", img: "https://img.icons8.com/color/120/shaka-sign.png", backup: "🤙" },
+                { name: "شيكابالا", img: "https://img.icons8.com/color/120/left-hand.png", backup: "🏹" }
             ],
             actors: [
-                { name: "عادل إمام", img: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🕶️" },
-                { name: "أحمد حلمي", img: "https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "👓" },
-                { name: "كريم عبد العزيز", img: "https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🌟" },
-                { name: "أحمد السقا", img: "https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🐎" },
-                { name: "محمد هنيدي", img: "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "😄" },
-                { name: "توم كروز", img: "https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🎬" },
-                { name: "ويل سميث", img: "https://images.pexels.com/photos/712513/pexels-photo-712513.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🎭" },
-                { name: "دي كابريو", img: "https://images.pexels.com/photos/837358/pexels-photo-837358.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🏆" },
-                { name: "أمير كرارة", img: "https://images.pexels.com/photos/842980/pexels-photo-842980.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🔥" },
-                { name: "ماجد الكدواني", img: "https://images.pexels.com/photos/937037/pexels-photo-937037.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "❤️" },
-                { name: "آسر ياسين", img: "https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "✨" },
-                { name: "منى زكي", img: "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🌸" },
-                { name: "ياسمين عبد العزيز", img: "https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "👑" },
-                { name: "جاكي شان", img: "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🥊" },
-                { name: "ذا روك", img: "https://images.pexels.com/photos/1212984/pexels-photo-1212984.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "💪" }
+                { name: "عادل إمام", img: "https://img.icons8.com/color/120/glasses.png", backup: "🕶️" },
+                { name: "أحمد حلمي", img: "https://img.icons8.com/color/120/year-of-dog.png", backup: "👓" },
+                { name: "كريم عبد العزيز", img: "https://img.icons8.com/color/120/star.png", backup: "🌟" },
+                { name: "أحمد السقا", img: "https://img.icons8.com/color/120/horse.png", backup: "🐎" },
+                { name: "محمد هنيدي", img: "https://img.icons8.com/color/120/grinning-face.png", backup: "😄" },
+                { name: "توم كروز", img: "https://img.icons8.com/color/120/clapperboard.png", backup: "🎬" },
+                { name: "ويل سميث", img: "https://img.icons8.com/color/120/theater-masks.png", backup: "🎭" },
+                { name: "دي كابريو", img: "https://img.icons8.com/color/120/oscar.png", backup: "🏆" },
+                { name: "أمير كرارة", img: "https://img.icons8.com/color/120/fire.png", backup: "🔥" },
+                { name: "ماجد الكدواني", img: "https://img.icons8.com/color/120/heart.png", backup: "❤️" },
+                { name: "آسر ياسين", img: "https://img.icons8.com/color/120/sparkles.png", backup: "✨" },
+                { name: "منى زكي", img: "https://img.icons8.com/color/120/flower.png", backup: "🌸" },
+                { name: "ياسمين عبد العزيز", img: "https://img.icons8.com/color/120/princess.png", backup: "👑" },
+                { name: "جاكي شان", img: "https://img.icons8.com/color/120/karate.png", backup: "🥊" },
+                { name: "ذا روك", img: "https://img.icons8.com/color/120/flex-biceps.png", backup: "💪" }
             ],
             movies: [
-                { name: "الجزيرة", img: "https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🏝️" },
-                { name: "الفيل الأزرق", img: "https://images.pexels.com/photos/66898/elephant-cub-tsavo-kenya-66898.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🐘" },
-                { name: "ولاد رزق", img: "https://images.pexels.com/photos/1709003/pexels-photo-1709003.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🔥" },
-                { name: "أفاتار (Avatar)", img: "https://images.pexels.com/photos/1169754/pexels-photo-1169754.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🌌" },
-                { name: "تايتنيك (Titanic)", img: "https://images.pexels.com/photos/163236/ship-cruise-ship-shipwreck-sea-163236.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🚢" },
-                { name: "كازابلانكا", img: "https://images.pexels.com/photos/2422588/pexels-photo-2422588.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🇲🇦" },
-                { name: "كيرة والجن", img: "https://images.pexels.com/photos/1117132/pexels-photo-1117132.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "⚔️" },
-                { name: "Inception", img: "https://images.pexels.com/photos/373543/pexels-photo-373543.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🌀" },
-                { name: "Interstellar", img: "https://images.pexels.com/photos/2150/sky-space-dark-galaxy.jpg?auto=compress&cs=tinysrgb&w=200", backup: "🚀" },
-                { name: "Joker", img: "https://images.pexels.com/photos/2097090/pexels-photo-2097090.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🃏" },
-                { name: "The Dark Knight", img: "https://images.pexels.com/photos/2885320/pexels-photo-2885320.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🦇" },
-                { name: "Avengers", img: "https://images.pexels.com/photos/77686/pexels-photo-77686.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🛡️" },
-                { name: "إبراهيم الأبيض", img: "https://images.pexels.com/photos/163036/mario-luigi-figures-funny-163036.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🔪" },
-                { name: "صعيدي في الجامعة", img: "https://images.pexels.com/photos/207691/pexels-photo-207691.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🎓" },
-                { name: "عسل أسود", img: "https://images.pexels.com/photos/1000445/pexels-photo-1000445.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🇪🇬" }
+                { name: "الجزيرة", img: "https://img.icons8.com/color/120/island.png", backup: "🏝️" },
+                { name: "الفيل الأزرق", img: "https://img.icons8.com/color/120/elephant.png", backup: "🐘" },
+                { name: "ولاد رزق", img: "https://img.icons8.com/color/120/police-car.png", backup: "🔥" },
+                { name: "أفاتار (Avatar)", img: "https://img.icons8.com/color/120/planet.png", backup: "🌌" },
+                { name: "تايتنيك (Titanic)", img: "https://img.icons8.com/color/120/titanic.png", backup: "🚢" },
+                { name: "كازابلانكا", img: "https://img.icons8.com/color/120/city.png", backup: "🇲🇦" },
+                { name: "كيرة والجن", img: "https://img.icons8.com/color/120/swords.png", backup: "⚔️" },
+                { name: "Inception", img: "https://img.icons8.com/color/120/top.png", backup: "🌀" },
+                { name: "Interstellar", img: "https://img.icons8.com/color/120/space-shuttle.png", backup: "🚀" },
+                { name: "Joker", img: "https://img.icons8.com/color/120/joker.png", backup: "🃏" },
+                { name: "The Dark Knight", img: "https://img.icons8.com/color/120/batman.png", backup: "🦇" },
+                { name: "Avengers", img: "https://img.icons8.com/color/120/shield.png", backup: "🛡️" },
+                { name: "إبراهيم الأبيض", img: "https://img.icons8.com/color/120/knife.png", backup: "🔪" },
+                { name: "صعيدي في الجامعة", img: "https://img.icons8.com/color/120/graduation-cap.png", backup: "🎓" },
+                { name: "عسل أسود", img: "https://img.icons8.com/color/120/egypt.png", backup: "🇪🇬" }
             ],
             food: [
-                { name: "كشري", img: "https://images.pexels.com/photos/1279330/pexels-photo-1279330.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🍲" },
-                { name: "بيتزا", img: "https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🍕" },
-                { name: "برجر", img: "https://images.pexels.com/photos/1639557/pexels-photo-1639557.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🍔" },
-                { name: "ملوخية", img: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🌿" },
-                { name: "شاورما", img: "https://images.pexels.com/photos/461198/pexels-photo-461198.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🥙" },
-                { name: "طعمية / فلافل", img: "https://images.pexels.com/photos/1583884/pexels-photo-1583884.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🧆" },
-                { name: "فول مدمس", img: "https://images.pexels.com/photos/6287519/pexels-photo-6287519.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🥣" },
-                { name: "فتة مصرية", img: "https://images.pexels.com/photos/6287525/pexels-photo-6287525.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🍚" },
-                { name: "حواوشي", img: "https://images.pexels.com/photos/2983101/pexels-photo-2983101.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🥩" },
-                { name: "سوشي", img: "https://images.pexels.com/photos/357756/pexels-photo-357756.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🍣" },
-                { name: "كبسة", img: "https://images.pexels.com/photos/1624487/pexels-photo-1624487.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🍗" },
-                { name: "أم علي", img: "https://images.pexels.com/photos/376464/pexels-photo-376464.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🍨" },
-                { name: "بشاميل", img: "https://images.pexels.com/photos/1279330/pexels-photo-1279330.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🧀" },
-                { name: "كباب وكفتة", img: "https://images.pexels.com/photos/2233729/pexels-photo-2233729.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🍢" },
-                { name: "وافل", img: "https://images.pexels.com/photos/376464/pexels-photo-376464.jpeg?auto=compress&cs=tinysrgb&w=200", backup: "🧇" }
+                { name: "كشري", img: "https://img.icons8.com/color/120/noodles.png", backup: "🍲" },
+                { name: "بيتزا", img: "https://img.icons8.com/color/120/pizza.png", backup: "🍕" },
+                { name: "برجر", img: "https://img.icons8.com/color/120/hamburger.png", backup: "🍔" },
+                { name: "ملوخية", img: "https://img.icons8.com/color/120/salad.png", backup: "🌿" },
+                { name: "شاورما", img: "https://img.icons8.com/color/120/burrito.png", backup: "🥙" },
+                { name: "طعمية / فلافل", img: "https://img.icons8.com/color/120/falafel.png", backup: "🧆" },
+                { name: "فول مدمس", img: "https://img.icons8.com/color/120/bowl.png", backup: "🥣" },
+                { name: "فتة مصرية", img: "https://img.icons8.com/color/120/rice-bowl.png", backup: "🍚" },
+                { name: "حواوشي", img: "https://img.icons8.com/color/120/steak.png", backup: "🥩" },
+                { name: "سوشي", img: "https://img.icons8.com/color/120/sushi.png", backup: "🍣" },
+                { name: "كبسة", img: "https://img.icons8.com/color/120/fried-chicken.png", backup: "🍗" },
+                { name: "أم علي", img: "https://img.icons8.com/color/120/ice-cream-cone.png", backup: "🍨" },
+                { name: "بشاميل", img: "https://img.icons8.com/color/120/cheese.png", backup: "🧀" },
+                { name: "كباب وكفتة", img: "https://img.icons8.com/color/120/kebab.png", backup: "🍢" },
+                { name: "وافل", img: "https://img.icons8.com/color/120/waffle.png", backup: "🧇" }
             ]
         };
 
@@ -270,7 +301,7 @@
                 client.end();
                 client = null;
             }
-            location.reload(); // إعادة ضبط الصفحة والرجوع للقائمة
+            location.reload();
         }
 
         function joinRoom() {
@@ -291,7 +322,6 @@
                 card.className = 'card';
                 card.id = `card-${index}`;
                 
-                // إضافة الصورة مع كود طوارئ (Fallback) في حالة البطء أو انقطاع النت
                 card.innerHTML = `
                     <div class="card-img-container">
                         <img src="${item.img}" alt="${item.name}" onerror="this.outerHTML='${item.backup}'">
@@ -305,25 +335,43 @@
 
         function handleCardClick(index, name) {
             const card = document.getElementById(`card-${index}`);
+            
+            // اختيار الكارت السري لأول مرة
             if (!mySecretPlayer) {
                 mySecretPlayer = name;
                 card.classList.add('my-choice');
-                document.getElementById('status').innerText = `كارتك السرّي: (${name}). اسأل أو اضغط على كارت لشطبه!`;
-            } else {
-                if (confirm(`هل تريد استبعاد/شطب (${name})؟`)) {
-                    card.classList.add('eliminated');
-                } else if (confirm(`هل تريد تخمين أن كارت المنافس هو (${name})؟`)) {
-                    if (isOffline) {
-                        if (name === botSecretPlayer) {
-                            alert("🎉 مبروك! خمنت كارت الكمبيوتر صح وفزت باللعبة!");
-                            addMessage("النظام", `🎉 فزت بالمباراة! الكارت كان (${name})`);
-                        } else {
-                            addMessage("الكمبيوتر", `تخمين خاطئ ❌ (${name}) مش كارتي السرّي!`);
-                        }
+                document.getElementById('status').innerText = `كارتك السرّي: (${name}). اضغط على أي كارت للخيارات!`;
+                return;
+            }
+
+            // إظهار نافذة الاختيارات الاحترافية
+            activeCardIndex = index;
+            activeCardName = name;
+            document.getElementById('modal-card-name').innerText = `الكارت: ${name}`;
+            document.getElementById('action-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('action-modal').classList.add('hidden');
+        }
+
+        function executeAction(type) {
+            closeModal();
+            const card = document.getElementById(`card-${activeCardIndex}`);
+
+            if (type === 'eliminate') {
+                card.classList.add('eliminated');
+            } else if (type === 'guess') {
+                if (isOffline) {
+                    if (activeCardName === botSecretPlayer) {
+                        alert("🎉 مبروك! خمنت كارت الكمبيوتر صح وفزت باللعبة!");
+                        addMessage("النظام", `🎉 فزت بالمباراة! الكارت كان (${activeCardName})`);
                     } else {
-                        sendMessage({ type: 'guess', name: name });
-                        addMessage("أنت", `خمنت أن كارت صاحبك هو: ${name}`);
+                        addMessage("الكمبيوتر", `تخمين خاطئ ❌ (${activeCardName}) مش كارتي السرّي!`);
                     }
+                } else {
+                    sendMessage({ type: 'guess', name: activeCardName });
+                    addMessage("أنت", `خمنت أن كارت صاحبك هو: ${activeCardName}`);
                 }
             }
         }
