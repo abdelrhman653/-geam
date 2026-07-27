@@ -1,0 +1,408 @@
+Enter<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>من هو اللاعب؟ - أونلاين & أوفلاين</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .card {
+            background: #1e293b;
+            width: 100%;
+            max-width: 480px;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid #334155;
+            text-align: center;
+        }
+
+        h1 {
+            color: #38bdf8;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: #fff;
+            font-size: 16px;
+            margin-bottom: 12px;
+            outline: none;
+            text-align: center;
+        }
+
+        input:focus {
+            border-color: #38bdf8;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background: #475569;
+        }
+        
+        .btn-secondary:hover {
+            background: #334155;
+        }
+
+        .btn-bot {
+            background: #10b981;
+        }
+
+        .btn-bot:hover {
+            background: #059669;
+        }
+
+        .room-info {
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px dashed #38bdf8;
+        }
+
+        .status {
+            font-size: 14px;
+            color: #f59e0b;
+            margin-top: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .clubs-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .badge {
+            background: #334155;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #38bdf8;
+        }
+
+        .history-box {
+            text-align: right;
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 8px;
+            max-height: 120px;
+            overflow-y: auto;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        .history-item {
+            padding: 4px 0;
+            border-bottom: 1px solid #1e293b;
+        }
+    </style>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCPLSt21cRCgUsL3QA2TakbI0af07zQKsM",
+            authDomain: "whoisitgame.firebaseapp.com",
+            databaseURL: "https://whoisitgame-default-rtdb.firebaseio.com",
+            projectId: "whoisitgame",
+            storageBucket: "whoisitgame.firebasestorage.app",
+            messagingSenderId: "347423883446",
+            appId: "1:347423883446:web:9c435668649ec0e8d76617"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // قائمة اللاعبين
+        const PLAYERS_DATABASE = [
+            { name: "محمد صلاح", clubs: ["المقاولون العرب", "بازل", "تشيلسي", "فيورنتينا", "روما", "ليفربول"] },
+            { name: "كريستيانو رونالدو", clubs: ["سبورتينغ لشبونة", "مانشستر يونايتد", "ريال مدريد", "يوفنتوس", "النصر"] },
+            { name: "ليونيل ميسي", clubs: ["برشلونة", "باريس سان جيرمان", "إنتر ميامي"] },
+            { name: "كريم بنزيما", clubs: ["ليون", "ريال مدريد", "الاتحاد"] },
+            { name: "رياض محرز", clubs: ["لوهافر", "ليستر سيتي", "مانشستر سيتي", "الأهلي السعودي"] },
+            { name: "نيمار", clubs: ["سانتوس", "برشلونة", "باريس سان جيرمان", "الهلال"] },
+            { name: "لوكا مودريتش", clubs: ["دينامو زغرب", "توتنهام", "ريال مدريد"] }
+        ];
+
+        let roomId = "";
+        let playerRole = ""; // 'host' or 'guest'
+        let playerName = "";
+        let isVsBot = false;
+        let currentSecretPlayer = null;
+        let botTurnCount = 0;
+
+        // بدء اللعب ضد الكمبيوتر
+        window.startBotGame = function() {
+            const nameInput = document.getElementById('username').value;
+            playerName = nameInput || "اللاعب";
+            isVsBot = true;
+
+            currentSecretPlayer = PLAYERS_DATABASE[Math.floor(Math.random() * PLAYERS_DATABASE.length)];
+
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('display-room-code').innerText = "الكمبيوتر 🤖";
+
+            // إظهار الأندية
+            const clubsDiv = document.getElementById('clubs-list');
+            clubsDiv.innerHTML = "";
+            currentSecretPlayer.clubs.forEach(club => {
+                clubsDiv.innerHTML += `<span class="badge">${club}</span>`;
+            });
+
+            document.getElementById('game-status').innerText = "دورك الآن للتخمين!";
+            document.getElementById('history').innerHTML = "<b>سجل المحاولات:</b><br>";
+        }
+
+        // إنشاء غرفة أونلاين
+        window.createRoom = function() {
+            const nameInput = document.getElementById('username').value;
+            if(!nameInput) return alert("اكتب اسمك أولاً!");
+            
+            playerName = nameInput;
+            roomId = Math.floor(1000 + Math.random() * 9000).toString();
+            playerRole = 'host';
+            isVsBot = false;
+
+            const randomPlayer = PLAYERS_DATABASE[Math.floor(Math.random() * PLAYERS_DATABASE.length)];
+
+            set(ref(db, 'rooms/' + roomId), {
+                host: playerName,
+                guest: "",
+                secretPlayer: randomPlayer,
+                turn: 'host',
+                guesses: [],
+                winner: ""
+            }).then(() => {
+                listenToRoom();
+            });
+        }
+
+        // انضمام لغرفة أونلاين
+        window.joinRoom = function() {
+            const nameInput = document.getElementById('username').value;
+            const codeInput = document.getElementById('roomCodeInput').value;
+            if(!nameInput || !codeInput) return alert("اكتب اسمك وكود الغرفة!");
+
+            playerName = nameInput;
+            roomId = codeInput;
+            playerRole = 'guest';
+            isVsBot = false;
+
+            update(ref(db, 'rooms/' + roomId), {
+                guest: playerName
+            }).then(() => {
+                listenToRoom();
+            });
+        }
+
+        function listenToRoom() {
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('display-room-code').innerText = roomId;
+
+            onValue(ref(db, 'rooms/' + roomId), (snapshot) => {
+                const data = snapshot.val();
+                if(!data) return;
+
+                if(!data.guest) {
+                    document.getElementById('game-status').innerText = "في انتظار انضمام اللاعب الثاني...";
+                    return;
+                }
+
+                const clubsDiv = document.getElementById('clubs-list');
+                clubsDiv.innerHTML = "";
+                data.secretPlayer.clubs.forEach(club => {
+                    clubsDiv.innerHTML += `<span class="badge">${club}</span>`;
+                });
+
+                if(data.winner) {
+                    document.getElementById('game-status').innerText = `🎉 الفائز هو: ${data.winner}! اللاعب هو (${data.secretPlayer.name})`;
+                } else {
+                    const isMyTurn = (data.turn === playerRole);
+                    document.getElementById('game-status').innerText = isMyTurn ? "دورك الآن للتخمين!" : "دور المنافس يفكر...";
+                }
+
+                const historyDiv = document.getElementById('history');
+                historyDiv.innerHTML = "<b>سجل المحاولات:</b><br>";
+                if(data.guesses) {
+                    Object.values(data.guesses).forEach(g => {
+                        historyDiv.innerHTML += `<div class="history-item"><b>${g.by}:</b> ${g.text} ${g.correct ? '✅' : '❌'}</div>`;
+                    });
+                }
+            });
+        }
+
+        // التخمين
+        window.makeGuess = function() {
+            const guessInput = document.getElementById('guessInput').value.trim();
+            if(!guessInput) return;
+
+            if (isVsBot) {
+                // وضع الكمبيوتر
+                const isCorrect = guessInput.toLowerCase() === currentSecretPlayer.name.toLowerCase();
+                const historyDiv = document.getElementById('history');
+
+                historyDiv.innerHTML += `<div class="history-item"><b>${playerName}:</b> ${guessInput} ${isCorrect ? '✅' : '❌'}</div>`;
+                document.getElementById('guessInput').value = "";
+
+                if (isCorrect) {
+                    document.getElementById('game-status').innerText = `🎉 مبروك! إجابة صحيحة، اللاعب هو ${currentSecretPlayer.name}!`;
+                } else {
+                    document.getElementById('game-status').innerText = "الكمبيوتر يفكر في إجابته...";
+                    setTimeout(botMakeGuess, 1500);
+                }
+            } else {
+                // وضع الأونلاين
+                onValue(ref(db, 'rooms/' + roomId), (snapshot) => {
+                    const data = snapshot.val();
+                    if(data.turn !== playerRole || data.winner) return;
+
+                    const isCorrect = guessInput.toLowerCase() === data.secretPlayer.name.toLowerCase();
+                    const nextTurn = playerRole === 'host' ? 'guest' : 'host';
+
+                    const newGuesses = data.guesses || [];
+                    newGuesses.push({
+                        by: playerName,
+                        text: guessInput,
+                        correct: isCorrect
+                    });
+
+                    const updates = {
+                        guesses: newGuesses,
+                        turn: nextTurn
+                    };
+
+                    if(isCorrect) {
+                        updates.winner = playerName;
+                    }
+
+                    update(ref(db, 'rooms/' + roomId), updates);
+                    document.getElementById('guessInput').value = "";
+                }, { onlyOnce: true });
+            }
+        }
+
+        // ذكاء الكمبيوتر
+        function botMakeGuess() {
+            botTurnCount++;
+            const historyDiv = document.getElementById('history');
+            
+            // الكمبيوتر يخمن صح بعد المحاولة الثالثة أو يخمن عشوائي
+            let botGuess = "";
+            let isBotCorrect = false;
+
+            if (botTurnCount >= 3 && Math.random() > 0.4) {
+                botGuess = currentSecretPlayer.name;
+                isBotCorrect = true;
+            } else {
+                const otherPlayers = PLAYERS_DATABASE.filter(p => p.name !== currentSecretPlayer.name);
+                botGuess = otherPlayers[Math.floor(Math.random() * otherPlayers.length)].name;
+            }
+
+            historyDiv.innerHTML += `<div class="history-item"><b>الكمبيوتر 🤖:</b> ${botGuess} ${isBotCorrect ? '✅' : '❌'}</div>`;
+
+            if (isBotCorrect) {
+                document.getElementById('game-status').innerText = `🤖 الكمبيوتر فاز! التخمين الصحيح كان: ${currentSecretPlayer.name}`;
+            } else {
+                document.getElementById('game-status').innerText = "دورك الآن للتخمين!";
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div class="card">
+        <h1>⚽ من هو اللاعب؟</h1>
+        <p class="subtitle">لعبة تخمين أونلاين أو ضد الكمبيوتر</p>
+
+        <!-- شاشة الدخول -->
+        <div id="setup-screen">
+            <input type="text" id="username" placeholder="اكتب اسمك هنا">
+            
+            <button onclick="startBotGame()" class="btn-bot">🤖 اللعب ضد الكمبيوتر</button>
+            <hr style="border-color: #334155; margin: 15px 0;">
+            
+            <button onclick="createRoom()">إنشاء غرفة أونلاين</button>
+            <input type="text" id="roomCodeInput" placeholder="أدخل كود الغرفة للانضمام" style="margin-top: 10px;">
+            <button onclick="joinRoom()" class="btn-secondary">انضمام لغرفة</button>
+        </div>
+
+        <!-- شاشة اللعب -->
+        <div id="game-screen" class="hidden">
+            <div class="room-info">
+                المنافس: <b id="display-room-code" style="color: #38bdf8;">----</b>
+            </div>
+
+            <p style="font-size: 14px; margin-top: 10px;">مسيرة اللاعب التنقلية:</p>
+            <div id="clubs-list" class="clubs-container">
+                <!-- الأندية بتظهر هنا -->
+            </div>
+
+            <div id="game-status" class="status">جاري التحميل...</div>
+
+            <div style="margin-top: 15px;">
+                <input type="text" id="guessInput" placeholder="اكتب اسم اللاعب...">
+                <button onclick="makeGuess()">إرسال التخمين</button>
+            </div>
+
+            <div id="history" class="history-box">
+                <!-- السجل -->
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
